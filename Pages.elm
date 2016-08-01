@@ -20,6 +20,9 @@ toHash page =
         UserPage id ->
             "#user/" ++ toString id
 
+        UserUpdatePage ->
+            "#user/update"
+
 hashParser : Navigation.Location -> Result String Page
 hashParser location =
     UrlParser.parse identity pageParser (String.dropLeft 1 location.hash)
@@ -29,6 +32,7 @@ type Page
     = Home
     | TravelPage Int
     | UserPage Int
+    | UserUpdatePage
 
 
 pageParser : Parser (Page -> a) a
@@ -37,6 +41,7 @@ pageParser =
         [ format Home (s "home")
         , format TravelPage (s "travel" </> int)
         , format UserPage (s "user" </> int)
+        , format UserUpdatePage (s "userupdate")
         ]
 
 urlParser : Navigation.Parser (Result String Page)

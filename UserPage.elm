@@ -1,82 +1,52 @@
 module UserPage exposing (..)
 
-import Html exposing (Html, div, form, input, h1, text, ul, li, p, span)
-import Html.Attributes exposing (type', placeholder, value)
-import Html.Events exposing (onInput, onSubmit)
+import Html exposing (Html, div, text, ul, li, p, span)
 import Json.Decode as JsonD exposing ((:=))
-import Json.Encode as JsonE
+import Pages
 import Http
 import Task
 
 
-type alias User =
-    { id : Int
-    , email : String
-    }
+type alias Email
+    = String
+
+
+type alias UserId
+    = Int
 
 
 type alias Model =
-    { user : Maybe User
+    { emails : List Email
     , message : String
+    , userId : UserId
     }
 
 
-initialModel : Model
-initialModel =
-    { user = Nothing
+init : UserId -> Model
+init userId =
+    { emails = []
     , message = "Initiating"
+    , userId = userId
     }
-
-
-init : Model
-init =
-    initialModel
 
 
 type Msg
     = NoOp
-    | Success User
+    | Success (List Email)
     | Error String
-    | Email String
-    | Update
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
 
-        Success user ->
-            { model | message = "Your user profile", user = Just user }
+        Success emails ->
+            { model | message = "Your user profile", emails = emails }
                 ! []
 
         Error err ->
             { model | message = "Oops! An error occurred: " ++ err }
                 ! []
-
-        Email s ->
-            let
-                user =
-                    case model.user of
-                        Nothing ->
-                            Nothing
-
-                        Just x ->
-                            Just { x | email = s }
-                in
-                    { model | user = user }
-                        ! []
-
-        Update ->
-            let
-                cmds =
-                    case model.user of
-                        Nothing ->
-                            []
-
-                        Just x ->
-                            [post x Error Success]
-            in
-                { model | message = "Initiating update" }
-                    ! cmds
 
         _ ->
             model
@@ -86,64 +56,29 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ h1 [] [ text "hey" ]
-        , p [] [ text model.message ]
-        , (viewUser model.user)
+        [ p [] [ text model.message ]
+        , ul [] (List.map viewEmail model.emails)
         ]
 
 
-viewUser : Maybe User -> Html Msg
-viewUser user =
-    case user of
-        Nothing ->
-            text ""
+viewEmail : Email -> Html Msg
+viewEmail email =
+    li []
+        [ span [] [ Pages.linkTo (Pages.UserPage 1) [] [ text "Edit" ] ]
+        , text email ]
 
-        Just x ->
-            form [ onSubmit Update ]
-                [ input [ type' "text"
-                        , placeholder "email"
-                        , onInput Email
-                        , value x.email
-                        ] []
-                , input [ type' "submit"
-                        , value "Update"
-                        ] []
-                ]
 
-mountCmd : Int -> Cmd Msg
+mountCmd : UserId -> Cmd Msg
 mountCmd id =
     get id Error Success
 
 
-get : Int -> (String -> msg) -> (User -> msg) -> Cmd msg
-get id errorMsg msg =
-    Http.get decode ("http://localhost:3000/users/" ++ toString id)
+get : UserId -> (String -> msg) -> (List Email -> msg) -> Cmd msg
+get userId errorMsg msg =
+    Http.get decode ("http://localhost:3000/emails/")
         |> Task.mapError toString
         |> Task.perform errorMsg msg
 
-
-decode : JsonD.Decoder User
+decode : JsonD.Decoder (List String)
 decode =
-    JsonD.object2 User
-        ("id" := JsonD.int)
-        ("email" := JsonD.string)
-
-
-post : User -> (String -> msg) -> (User -> msg) -> Cmd msg
-post user errorMsg msg =
-    Http.send Http.defaultSettings
-        { verb = "POST"
-        , url = "http://localhost:3000/users"
-        , body = Http.string (encode user)
-        , headers = [ ( "Content-Type", "application/json" ) ]
-        }
-        |> Http.fromJson decode
-        |> Task.mapError toString
-        |> Task.perform errorMsg msg
-
-encode user =
-    JsonE.encode 0
-        <| JsonE.object
-            [ ("id", JsonE.int user.id)
-            , ("email", JsonE.string user.email)
-            ]
+    JsonD.list JsonD.string
