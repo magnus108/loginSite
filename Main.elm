@@ -3,6 +3,8 @@ module Main exposing (..)
 import Navigation
 import Pages
 import Home
+import Travel
+import UserPage
 import Html.App as App
 import Html exposing (Html, Attribute, div, text)
 
@@ -21,6 +23,8 @@ main =
 type alias Model =
     { page : Pages.Page
     , homeModel : Home.Model
+    , travelModel : Travel.Model
+    , userPageModel : UserPage.Model
     }
 
 
@@ -28,6 +32,8 @@ initialModel : Model
 initialModel =
     { page = Pages.Home
     , homeModel = Home.init
+    , travelModel = Travel.init
+    , userPageModel = UserPage.init
     }
 
 
@@ -39,6 +45,8 @@ init result =
 type Msg
     = NoOp
     | HomeMsg Home.Msg
+    | TravelMsg Travel.Msg
+    | UserPageMsg UserPage.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -51,6 +59,22 @@ update msg model =
             in
                 { model | homeModel = subMdl }
                     ! [ Cmd.map HomeMsg subCmd ]
+
+        TravelMsg m ->
+            let
+                ( subMdl, subCmd ) =
+                    Travel.update m model.travelModel
+            in
+                { model | travelModel = subMdl }
+                    ! [ Cmd.map TravelMsg subCmd ]
+
+        UserPageMsg m ->
+            let
+                ( subMdl, subCmd ) =
+                    UserPage.update m model.userPageModel
+            in
+                { model | userPageModel = subMdl }
+                    ! [ Cmd.map UserPageMsg subCmd ]
 
         _ ->
             model ! []
@@ -70,6 +94,18 @@ urlUpdate result model =
                     }
                         ! [ Cmd.map HomeMsg Home.mountCmd ]
 
+                Pages.TravelPage id ->
+                    { model
+                        | page = page
+                    }
+                        ! [ Cmd.map TravelMsg (Travel.mountCmd id)]
+
+                Pages.UserPage id ->
+                    { model
+                        | page = page
+                    }
+                        ! [ Cmd.map UserPageMsg (UserPage.mountCmd id)]
+
 
 view : Model -> Html Msg
 view model =
@@ -82,6 +118,11 @@ viewPage model =
         Pages.Home ->
             App.map HomeMsg <| Home.view model.homeModel
 
+        Pages.TravelPage id ->
+            App.map TravelMsg <| Travel.view model.travelModel
+
+        Pages.UserPage id ->
+            App.map UserPageMsg <| UserPage.view model.userPageModel
 
 subscriptions : Model -> Sub Msg
 subscriptions model =

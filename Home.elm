@@ -1,6 +1,7 @@
 module Home exposing (..)
 
 import Http
+import Pages
 import Api exposing (..)
 import Html exposing (Html, div, h1, text, ul, li, p, span)
 
@@ -57,6 +58,7 @@ travelRow travel =
     li []
         [ span [] [ text (toString travel.id) ]
         , text travel.name
+        , Pages.linkTo (Pages.TravelPage travel.id) [] [ text "More information" ]
         ]
 
 

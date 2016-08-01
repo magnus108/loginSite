@@ -14,6 +14,11 @@ toHash page =
         Home ->
             "#home"
 
+        TravelPage id ->
+            "#travel/" ++ toString id
+
+        UserPage id ->
+            "#user/" ++ toString id
 
 hashParser : Navigation.Location -> Result String Page
 hashParser location =
@@ -22,12 +27,16 @@ hashParser location =
 
 type Page
     = Home
+    | TravelPage Int
+    | UserPage Int
 
 
 pageParser : Parser (Page -> a) a
 pageParser =
     oneOf
         [ format Home (s "home")
+        , format TravelPage (s "travel" </> int)
+        , format UserPage (s "user" </> int)
         ]
 
 urlParser : Navigation.Parser (Result String Page)
