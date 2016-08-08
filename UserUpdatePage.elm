@@ -1,7 +1,8 @@
-module UserPage exposing (..)
+module UserUpdatePage exposing (..)
 
-import Pages
-import Html exposing (Html, div, text, h3, ul, li, span)
+import Html exposing (Html, div, text, form, input, h3, ul, li, span)
+import Html.Attributes exposing (type', placeholder, value)
+import Html.Events exposing (onInput, onSubmit)
 import Json.Decode as JsonD exposing ((:=))
 import Json.Encode as JsonE
 import Http
@@ -50,6 +51,8 @@ type Msg
     = NoOp
     | Error String
     | Fetch Result
+    | Submit String
+    | Input String String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -69,6 +72,43 @@ update msg model =
             { model | message = "Oops! An error occurred: " ++ err }
                 ! []
 
+        Input firstname str ->
+            let
+                (people, cmds) =
+                    List.unzip ( List.map (updateHelp upp firstname (Inputs str)) model.data.people )
+
+                data' =
+                    model.data
+            in
+                { model | data = { data' | people = people}} ! cmds
+        _ ->
+            model
+                ! []
+
+
+
+updateHelp upp firstname bob person =
+    if person.firstname /= firstname then
+        (person, Cmd.none)
+    else
+        let
+            (newperson, cmds) =
+                upp bob person
+        in
+            ( newperson
+            , Cmd.map (Input newperson.firstname) cmds
+            )
+
+
+type Bob
+    = Inputs String
+
+upp bob person =
+    case bob of
+        Inputs str ->
+            { person | firstname = str }
+                ! []
+
 
 view : Model -> Html Msg
 view model =
@@ -81,8 +121,16 @@ view model =
 personView : Person -> Html Msg
 personView person =
     li []
-        [ text person.firstname
-        , span [] [ Pages.linkTo (Pages.UserUpdatePage) [] [ text "update" ] ]
+        [ form [ onSubmit (Submit person.firstname) ]
+            [ input [ type' "text"
+                , placeholder "firstname"
+                , onInput (Input person.firstname)
+                , value person.firstname
+                ] []
+            , input [ type' "submit"
+                , value "Update"
+                ] []
+            ]
         ]
 
 

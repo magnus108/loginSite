@@ -2,8 +2,8 @@ module Main exposing (..)
 
 import Navigation
 import Pages
-import Home
-import Travel
+import HomePage
+import TravelPage
 import UserPage
 import UserUpdatePage
 import Html.App as App
@@ -23,9 +23,9 @@ main =
 
 type alias Model =
     { userId : Int
-    , page : Pages.Page
-    , homeModel : Home.Model
-    , travelModel : Travel.Model
+    , currentPage : Pages.Page
+    , homePageModel : HomePage.Model
+    , travelPageModel : TravelPage.Model
     , userPageModel : UserPage.Model
     , userUpdatePageModel : UserUpdatePage.Model
     }
@@ -34,11 +34,11 @@ type alias Model =
 initialModel : Model
 initialModel =
     { userId = 1
-    , page = Pages.Home
-    , homeModel = Home.init
-    , travelModel = Travel.init
-    , userPageModel = UserPage.init 1
-    , userUpdatePageModel = UserUpdatePage.init 1
+    , currentPage = Pages.HomePage
+    , homePageModel = HomePage.init
+    , travelPageModel = TravelPage.init
+    , userPageModel = UserPage.init
+    , userUpdatePageModel = UserUpdatePage.init
     }
 
 
@@ -49,29 +49,29 @@ init result =
 
 type Msg
     = NoOp
-    | HomeMsg Home.Msg
-    | TravelMsg Travel.Msg
+    | HomePageMsg HomePage.Msg
+    | TravelPageMsg TravelPage.Msg
     | UserPageMsg UserPage.Msg
     | UserUpdatePageMsg UserUpdatePage.Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        HomeMsg m ->
+        HomePageMsg m ->
             let
                 ( subMdl, subCmd ) =
-                    Home.update m model.homeModel
+                    HomePage.update m model.homePageModel
             in
-                { model | homeModel = subMdl }
-                    ! [ Cmd.map HomeMsg subCmd ]
+                { model | homePageModel = subMdl }
+                    ! [ Cmd.map HomePageMsg subCmd ]
 
-        TravelMsg m ->
+        TravelPageMsg m ->
             let
                 ( subMdl, subCmd ) =
-                    Travel.update m model.travelModel
+                    TravelPage.update m model.travelPageModel
             in
-                { model | travelModel = subMdl }
-                    ! [ Cmd.map TravelMsg subCmd ]
+                { model | travelPageModel = subMdl }
+                    ! [ Cmd.map TravelPageMsg subCmd ]
 
         UserPageMsg m ->
             let
@@ -88,7 +88,6 @@ update msg model =
             in
                 { model | userUpdatePageModel = subMdl }
                     ! [ Cmd.map UserUpdatePageMsg subCmd ]
-
         _ ->
             model ! []
 
@@ -97,59 +96,62 @@ urlUpdate : Result String Pages.Page -> Model -> ( Model, Cmd Msg )
 urlUpdate result model =
     case result of
         Err _ ->
-            model ! [ Pages.modify model.page ]
+            model ! [ Pages.modify model.currentPage ]
 
         Ok page ->
             case page of
-                Pages.Home ->
+                Pages.HomePage ->
                     { model
-                        | page = page
+                        | currentPage = page
                     }
-                        ! [ Cmd.map HomeMsg Home.mountCmd ]
+                        ! [ Cmd.map HomePageMsg HomePage.mountCmd ]
 
                 Pages.TravelPage id ->
                     { model
-                        | page = page
+                        | currentPage = page
                     }
-                        ! [ Cmd.map TravelMsg (Travel.mountCmd id)]
+                        ! [ Cmd.map TravelPageMsg (TravelPage.mountCmd id)]
 
-                Pages.UserPage id ->
+                Pages.UserPage ->
                     { model
-                        | page = page
+                        | currentPage = page
                     }
-                        ! [ Cmd.map UserPageMsg (UserPage.mountCmd id)]
+                        ! [ Cmd.map UserPageMsg UserPage.mountCmd ]
 
-                Pages.UserUpdatePage id ->
+                Pages.UserUpdatePage ->
                     { model
-                        | page = page
+                        | currentPage = page
                     }
-                        ! [ Cmd.map UserUpdatePageMsg (UserUpdatePage.mountCmd id)]
+                        ! [ Cmd.map UserUpdatePageMsg UserUpdatePage.mountCmd ]
+
 
 view : Model -> Html Msg
 view model =
     div []
         [ ul []
             [ li []
-                [ Pages.linkTo (Pages.UserPage model.userId) [] [ text "Profile" ]
-                , Pages.linkTo (Pages.Home) [] [ text "Travels" ]
+                [ Pages.linkTo (Pages.UserPage) [] [ text "Userpage" ]
+                , Pages.linkTo (Pages.HomePage) [] [ text "Homepage" ]
                 ]
             ]
         , viewPage model ]
 
+
 viewPage : Model -> Html Msg
 viewPage model =
-    case model.page of
-        Pages.Home ->
-            App.map HomeMsg <| Home.view model.homeModel
+    case model.currentPage of
+        Pages.HomePage ->
+            App.map HomePageMsg <| HomePage.view model.homePageModel
 
         Pages.TravelPage id ->
-            App.map TravelMsg <| Travel.view model.travelModel
+            App.map TravelPageMsg <| TravelPage.view model.travelPageModel
 
-        Pages.UserPage id ->
+        Pages.UserPage ->
             App.map UserPageMsg <| UserPage.view model.userPageModel
 
-        Pages.UserUpdatePage id ->
+        Pages.UserUpdatePage ->
             App.map UserUpdatePageMsg <| UserUpdatePage.view model.userUpdatePageModel
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =

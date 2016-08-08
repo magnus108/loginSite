@@ -11,17 +11,17 @@ import String
 toHash : Page -> String
 toHash page =
     case page of
-        Home ->
-            "#home"
+        HomePage ->
+            "#homepage"
 
         TravelPage id ->
-            "#travel/" ++ toString id
+            "#travelpage/" ++ toString id
 
-        UserPage id ->
-            "#user/" ++ toString id
+        UserPage ->
+            "#userpage"
 
         UserUpdatePage ->
-            "#user/update"
+            "#userupdatepage"
 
 hashParser : Navigation.Location -> Result String Page
 hashParser location =
@@ -29,20 +29,21 @@ hashParser location =
 
 
 type Page
-    = Home
+    = HomePage
     | TravelPage Int
-    | UserPage Int
+    | UserPage
     | UserUpdatePage
 
 
 pageParser : Parser (Page -> a) a
 pageParser =
     oneOf
-        [ format Home (s "home")
-        , format TravelPage (s "travel" </> int)
-        , format UserPage (s "user" </> int)
-        , format UserUpdatePage (s "userupdate")
+        [ format HomePage (s "homepage")
+        , format TravelPage (s "travelpage" </> int)
+        , format UserPage (s "userpage")
+        , format UserUpdatePage (s "userupdatepage")
         ]
+
 
 urlParser : Navigation.Parser (Result String Page)
 urlParser =

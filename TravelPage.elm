@@ -1,6 +1,5 @@
-module UserPage exposing (..)
+module TravelPage exposing (..)
 
-import Pages
 import Html exposing (Html, div, text, h3, ul, li, span)
 import Json.Decode as JsonD exposing ((:=))
 import Json.Encode as JsonE
@@ -25,7 +24,13 @@ type alias Data =
 
 
 type alias Person =
-    { firstname : String
+    { travels : List Travel
+    }
+
+
+type alias Travel =
+    { status : String
+    , destination : String
     }
 
 
@@ -61,7 +66,7 @@ update msg model =
 
         Fetch result ->
             { model
-                | message = "This is your account"
+                | message = "This is your travel"
                 , data = result.data
             } ! []
 
@@ -80,15 +85,21 @@ view model =
 
 personView : Person -> Html Msg
 personView person =
+    div []
+        [ ul [] (List.map travelView person.travels)
+        ]
+
+travelView : Travel -> Html Msg
+travelView travel =
     li []
-        [ text person.firstname
-        , span [] [ Pages.linkTo (Pages.UserUpdatePage) [] [ text "update" ] ]
+        [ span [] [ text (travel.status) ]
+        , text travel.destination
         ]
 
 
-mountCmd : Cmd Msg
-mountCmd =
-    fetch Error Fetch
+mountCmd : Int -> Cmd Msg
+mountCmd id =
+    fetch id Error Fetch
 
 
 baseUrl : String
@@ -96,12 +107,12 @@ baseUrl =
     "http://localhost:3000/graphql?raw"
 
 
-fetch : (String -> a) -> (Result -> a) -> Cmd a
-fetch errorMsg msg =
+fetch : Int -> (String -> a) -> (Result -> a) -> Cmd a
+fetch id errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl
-        , body = Http.string (encode (query))
+        , body = Http.string (encode (query id))
         , headers =
             [ ( "Content-Type", "application/json" ) ]
         }
@@ -130,14 +141,21 @@ peopleDecoder =
 personDecoder : JsonD.Decoder Person
 personDecoder =
     JsonD.object1 Person
-        ("firstname" := JsonD.string)
+        ("travels" := JsonD.list travelDecoder)
 
 
-query : JsonE.Value
-query =
+travelDecoder : JsonD.Decoder Travel
+travelDecoder =
+    JsonD.object2 Travel
+        ("status" := JsonD.string)
+        ("destination" := JsonD.string)
+
+
+query : Int -> JsonE.Value
+query id =
     JsonE.object
         [ ("query", JsonE.string ("{people(where:{email:\"Rey87@gmail.com\"})
-            {firstname}}"))
+            {travels(where:{id:" ++ (toString id) ++ "}){status destination}}}"))
         ]
 
 

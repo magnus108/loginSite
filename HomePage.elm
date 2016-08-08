@@ -1,5 +1,6 @@
-module UserPage exposing (..)
+module HomePage exposing (..)
 
+import Http
 import Pages
 import Html exposing (Html, div, text, h3, ul, li, span)
 import Json.Decode as JsonD exposing ((:=))
@@ -25,7 +26,13 @@ type alias Data =
 
 
 type alias Person =
-    { firstname : String
+    { travels : List Travel
+    }
+
+
+type alias Travel =
+    { id : Int
+    , destination : String
     }
 
 
@@ -48,8 +55,8 @@ init =
 
 type Msg
     = NoOp
-    | Error String
     | Fetch Result
+    | Error String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -61,7 +68,7 @@ update msg model =
 
         Fetch result ->
             { model
-                | message = "This is your account"
+                | message = "These are your travels"
                 , data = result.data
             } ! []
 
@@ -81,14 +88,17 @@ view model =
 personView : Person -> Html Msg
 personView person =
     li []
-        [ text person.firstname
-        , span [] [ Pages.linkTo (Pages.UserUpdatePage) [] [ text "update" ] ]
+        [ ul [] (List.map travelView person.travels)
         ]
 
 
-mountCmd : Cmd Msg
-mountCmd =
-    fetch Error Fetch
+travelView : Travel -> Html Msg
+travelView travel =
+    li []
+        [ span [] [ text (toString travel.id) ]
+        , text travel.destination
+        , Pages.linkTo (Pages.TravelPage travel.id) [] [ text "More information" ]
+        ]
 
 
 baseUrl : String
@@ -101,7 +111,7 @@ fetch errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl
-        , body = Http.string (encode (query))
+        , body = Http.string (encode query)
         , headers =
             [ ( "Content-Type", "application/json" ) ]
         }
@@ -130,17 +140,29 @@ peopleDecoder =
 personDecoder : JsonD.Decoder Person
 personDecoder =
     JsonD.object1 Person
-        ("firstname" := JsonD.string)
+        ("travels" := JsonD.list travelDecoder)
+
+
+travelDecoder : JsonD.Decoder Travel
+travelDecoder =
+    JsonD.object2 Travel
+        ("id" := JsonD.int)
+        ("destination" := JsonD.string)
 
 
 query : JsonE.Value
 query =
     JsonE.object
-        [ ("query", JsonE.string ("{people(where:{email:\"Rey87@gmail.com\"})
-            {firstname}}"))
+        [ ("query",
+            JsonE.string "{people(where:{email:\"Rey87@gmail.com\"}){travels{id destination}}}")
         ]
 
 
 encode : JsonE.Value -> String
 encode =
     JsonE.encode 0
+
+
+mountCmd : Cmd Msg
+mountCmd =
+    fetch Error Fetch
