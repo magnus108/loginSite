@@ -54,7 +54,7 @@ init =
 type Msg
     = NoOp
     | Error String
-    | Fetch Result
+    | Get Result
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -64,7 +64,7 @@ update msg model =
             model
                 ! []
 
-        Fetch result ->
+        Get result ->
             { model
                 | message = "This is your travel"
                 , data = result.data
@@ -99,7 +99,7 @@ travelView travel =
 
 mountCmd : Int -> Cmd Msg
 mountCmd id =
-    fetch id Error Fetch
+    get id Error Get
 
 
 baseUrl : String
@@ -107,8 +107,8 @@ baseUrl =
     "http://localhost:3000/graphql?raw"
 
 
-fetch : Int -> (String -> a) -> (Result -> a) -> Cmd a
-fetch id errorMsg msg =
+get : Int -> (String -> a) -> (Result -> a) -> Cmd a
+get id errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl

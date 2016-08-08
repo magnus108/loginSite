@@ -9,6 +9,20 @@ import Http
 import Task
 
 
+type alias UpdatePeople =
+    { updatePeople : People
+    }
+
+
+type alias People =
+    { people : List Person
+    }
+
+type Data
+    = Query People
+    | Mutation UpdatePeople
+
+
 type alias Model =
     { data : Data
     , message : String
@@ -20,11 +34,6 @@ type alias Result =
     }
 
 
-type alias Data =
-    { people : List Person
-    }
-
-
 type alias Person =
     { firstname : String
     }
@@ -32,7 +41,7 @@ type alias Person =
 
 emptyData : Data
 emptyData =
-    { people = [] }
+    Query { people = [] }
 
 
 emptyModel : Model
@@ -50,8 +59,8 @@ init =
 type Msg
     = NoOp
     | Error String
-    | Fetch Result
-    | Submit String
+    | Get Result
+    | Submit Person
     | Input String String
 
 
@@ -62,29 +71,39 @@ update msg model =
             model
                 ! []
 
-        Fetch result ->
-            { model
-                | message = "This is your account"
-                , data = result.data
-            } ! []
+        Get result ->
+            case result.data of
+                Query data ->
+                    { model
+                        | message = "This is your account"
+                        , data = Query data
+                    } ! []
+                Mutation data ->
+                    { model
+                        | message = "Your update"
+                        , data = Mutation data
+                    } ! []
 
         Error err ->
             { model | message = "Oops! An error occurred: " ++ err }
                 ! []
 
         Input firstname str ->
-            let
-                (people, cmds) =
-                    List.unzip ( List.map (updateHelp upp firstname (Inputs str)) model.data.people )
+            case model.data of
+                Query data ->
+                    let
+                        (people, cmds) =
+                            List.unzip ( List.map (updateHelp upp firstname (Inputs str)) data.people )
 
-                data' =
-                    model.data
-            in
-                { model | data = { data' | people = people}} ! cmds
-        _ ->
-            model
-                ! []
+                    in
+                        { model | data = Query { data | people = people}} ! cmds
 
+                Mutation data ->
+                        model ! []
+
+        Submit person  ->
+            { model | message = "Initiating update" }
+                ! [post person Error Get]
 
 
 updateHelp upp firstname bob person =
@@ -112,16 +131,35 @@ upp bob person =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ h3 [] [ text model.message ]
-        , ul [] (List.map personView model.data.people)
+    let
+        head =
+            h3 [] [ text model.message ]
+
+        body =
+            case model.data of
+                Query data ->
+                    div []
+                        [ ul [] (List.map personFormView data.people)
+                        ]
+                Mutation data ->
+                    div []
+                        [ ul [] (List.map personUpdateView data.updatePeople.people)
+                        ]
+    in
+        div [] [ head, body ]
+
+
+personUpdateView : Person -> Html Msg
+personUpdateView person =
+    li []
+        [ text person.firstname
         ]
 
 
-personView : Person -> Html Msg
-personView person =
+personFormView : Person -> Html Msg
+personFormView person =
     li []
-        [ form [ onSubmit (Submit person.firstname) ]
+        [ form [ onSubmit (Submit person) ]
             [ input [ type' "text"
                 , placeholder "firstname"
                 , onInput (Input person.firstname)
@@ -136,7 +174,7 @@ personView person =
 
 mountCmd : Cmd Msg
 mountCmd =
-    fetch Error Fetch
+    get Error Get
 
 
 baseUrl : String
@@ -144,14 +182,27 @@ baseUrl =
     "http://localhost:3000/graphql?raw"
 
 
-fetch : (String -> a) -> (Result -> a) -> Cmd a
-fetch errorMsg msg =
+get : (String -> a) -> (Result -> a) -> Cmd a
+get errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl
-        , body = Http.string (encode (query))
+        , body = Http.string (encode query)
         , headers =
             [ ( "Content-Type", "application/json" ) ]
+        }
+        |> Http.fromJson resultDecoder
+        |> Task.mapError toString
+        |> Task.perform errorMsg msg
+
+
+post : Person -> (String -> a) -> (Result -> a) -> Cmd a
+post person errorMsg msg =
+    Http.send Http.defaultSettings
+        { verb = "POST"
+        , url = baseUrl
+        , body = Http.string (encode (mutation person.firstname))
+        , headers = [ ( "Content-Type", "application/json" ) ]
         }
         |> Http.fromJson resultDecoder
         |> Task.mapError toString
@@ -166,19 +217,36 @@ resultDecoder =
 
 dataDecoder : JsonD.Decoder Data
 dataDecoder =
-    JsonD.object1 Data
-        ("people" := peopleDecoder)
+    JsonD.oneOf
+    [ JsonD.object1 Query peopleDecoder
+    , JsonD.object1 Mutation updatePeopleDecoder
+    ]
 
 
-peopleDecoder : JsonD.Decoder (List Person)
+updatePeopleDecoder : JsonD.Decoder UpdatePeople
+updatePeopleDecoder =
+    JsonD.object1 UpdatePeople
+        ("updatePeople" := peopleDecoder)
+
+
+peopleDecoder : JsonD.Decoder People
 peopleDecoder =
-    JsonD.list personDecoder
+    JsonD.object1 People
+        ("people" := JsonD.list personDecoder)
 
 
 personDecoder : JsonD.Decoder Person
 personDecoder =
     JsonD.object1 Person
         ("firstname" := JsonD.string)
+
+
+mutation : String -> JsonE.Value
+mutation firstname =
+    JsonE.object
+        [ ("query", JsonE.string ("mutation { updatePeople(values: {firstname: \"" ++ firstname ++ "\"},
+            options: {where: {email: \"Rey87@gmail.com\"}, returning: true}) { people { firstname}}}"))
+        ]
 
 
 query : JsonE.Value

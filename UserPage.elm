@@ -49,7 +49,7 @@ init =
 type Msg
     = NoOp
     | Error String
-    | Fetch Result
+    | Get Result
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -59,7 +59,7 @@ update msg model =
             model
                 ! []
 
-        Fetch result ->
+        Get result ->
             { model
                 | message = "This is your account"
                 , data = result.data
@@ -88,7 +88,7 @@ personView person =
 
 mountCmd : Cmd Msg
 mountCmd =
-    fetch Error Fetch
+    get Error Get
 
 
 baseUrl : String
@@ -96,8 +96,8 @@ baseUrl =
     "http://localhost:3000/graphql?raw"
 
 
-fetch : (String -> a) -> (Result -> a) -> Cmd a
-fetch errorMsg msg =
+get : (String -> a) -> (Result -> a) -> Cmd a
+get errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl
