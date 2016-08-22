@@ -8,7 +8,8 @@ import Task
 
 
 type alias Model =
-    { data : Data
+    { userId : String
+    , data : Data
     , message : String
     }
 
@@ -39,16 +40,17 @@ emptyData =
     { people = [] }
 
 
-emptyModel : Model
-emptyModel =
-    { data = emptyData
+emptyModel : String -> Model
+emptyModel userId =
+    { userId = userId
+    , data = emptyData
     , message = "Initiating"
     }
 
 
-init : Model
-init =
-    emptyModel
+init : String -> Model
+init userId =
+    emptyModel userId
 
 
 type Msg
@@ -97,9 +99,9 @@ travelView travel =
         ]
 
 
-mountCmd : Int -> Cmd Msg
-mountCmd id =
-    get id Error Get
+mountCmd : String -> Int -> Cmd Msg
+mountCmd userId id =
+    get userId id Error Get
 
 
 baseUrl : String
@@ -107,12 +109,12 @@ baseUrl =
     "http://localhost:3000/graphql?raw"
 
 
-get : Int -> (String -> a) -> (Result -> a) -> Cmd a
-get id errorMsg msg =
+get : String -> Int -> (String -> a) -> (Result -> a) -> Cmd a
+get userId id errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl
-        , body = Http.string (encode (query id))
+        , body = Http.string (encode (query userId id))
         , headers =
             [ ( "Content-Type", "application/json" ) ]
         }
@@ -151,10 +153,10 @@ travelDecoder =
         ("destination" := JsonD.string)
 
 
-query : Int -> JsonE.Value
-query id =
+query : String -> Int -> JsonE.Value
+query userId id =
     JsonE.object
-        [ ("query", JsonE.string ("{people(where:{email:\"Rey87@gmail.com\"})
+        [ ("query", JsonE.string ("{people(where:{email:\"" ++ userId ++ "\"})
             {travels(where:{id:" ++ (toString id) ++ "}){status destination}}}"))
         ]
 

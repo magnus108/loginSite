@@ -21,9 +21,11 @@ main =
         }
 
 
+-- remove this 
+userId = "Reba.Waelchi@yahoo.com"
+
 type alias Model =
-    { userId : Int
-    , currentPage : Pages.Page
+    { currentPage : Pages.Page
     , homePageModel : HomePage.Model
     , travelPageModel : TravelPage.Model
     , userPageModel : UserPage.Model
@@ -33,12 +35,11 @@ type alias Model =
 
 initialModel : Model
 initialModel =
-    { userId = 1
-    , currentPage = Pages.HomePage
-    , homePageModel = HomePage.init
-    , travelPageModel = TravelPage.init
-    , userPageModel = UserPage.init
-    , userUpdatePageModel = UserUpdatePage.init
+    { currentPage = Pages.HomePage
+    , homePageModel = HomePage.init userId
+    , travelPageModel = TravelPage.init userId
+    , userPageModel = UserPage.init userId
+    , userUpdatePageModel = UserUpdatePage.init userId
     }
 
 
@@ -104,25 +105,25 @@ urlUpdate result model =
                     { model
                         | currentPage = page
                     }
-                        ! [ Cmd.map HomePageMsg HomePage.mountCmd ]
+                        ! [ Cmd.map HomePageMsg (HomePage.mountCmd model.homePageModel.userId) ]
 
                 Pages.TravelPage id ->
                     { model
                         | currentPage = page
                     }
-                        ! [ Cmd.map TravelPageMsg (TravelPage.mountCmd id)]
+                        ! [ Cmd.map TravelPageMsg (TravelPage.mountCmd model.travelPageModel.userId id)]
 
                 Pages.UserPage ->
                     { model
                         | currentPage = page
                     }
-                        ! [ Cmd.map UserPageMsg UserPage.mountCmd ]
+                        ! [ Cmd.map UserPageMsg (UserPage.mountCmd model.userPageModel.userId ) ]
 
                 Pages.UserUpdatePage ->
                     { model
                         | currentPage = page
                     }
-                        ! [ Cmd.map UserUpdatePageMsg UserUpdatePage.mountCmd ]
+                        ! [ Cmd.map UserUpdatePageMsg (UserUpdatePage.mountCmd model.userUpdatePageModel.userId) ]
 
 
 view : Model -> Html Msg

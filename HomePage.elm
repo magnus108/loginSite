@@ -10,7 +10,8 @@ import Task
 
 
 type alias Model =
-    { data : Data
+    { userId : String
+    , data : Data
     , message : String
     }
 
@@ -41,16 +42,16 @@ emptyData =
     { people = [] }
 
 
-emptyModel : Model
-emptyModel =
-    { data = emptyData
+emptyModel : String -> Model
+emptyModel userId =
+    { userId = userId
+    , data = emptyData
     , message = "Initiating"
     }
 
-
-init : Model
-init =
-    emptyModel
+init : String -> Model
+init userId =
+    emptyModel userId
 
 
 type Msg
@@ -106,12 +107,12 @@ baseUrl =
     "http://localhost:3000/graphql?raw"
 
 
-get : (String -> a) -> (Result -> a) -> Cmd a
-get errorMsg msg =
+get : String -> (String -> a) -> (Result -> a) -> Cmd a
+get userId errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl
-        , body = Http.string (encode query)
+        , body = Http.string (encode (query userId))
         , headers =
             [ ( "Content-Type", "application/json" ) ]
         }
@@ -150,11 +151,11 @@ travelDecoder =
         ("destination" := JsonD.string)
 
 
-query : JsonE.Value
-query =
+query : String -> JsonE.Value
+query userId =
     JsonE.object
         [ ("query",
-            JsonE.string "{people(where:{email:\"Rey87@gmail.com\"}){travels{id destination}}}")
+            JsonE.string ("{people(where:{email:\"" ++ userId ++ "\"}){travels{id destination}}}"))
         ]
 
 
@@ -163,6 +164,6 @@ encode =
     JsonE.encode 0
 
 
-mountCmd : Cmd Msg
-mountCmd =
-    get Error Get
+mountCmd : String -> Cmd Msg
+mountCmd userId =
+    get userId Error Get

@@ -18,13 +18,15 @@ type alias People =
     { people : List Person
     }
 
+
 type Data
     = Query People
     | Mutation UpdatePeople
 
 
 type alias Model =
-    { data : Data
+    { userId : String
+    , data : Data
     , message : String
     }
 
@@ -44,16 +46,17 @@ emptyData =
     Query { people = [] }
 
 
-emptyModel : Model
-emptyModel =
-    { data = emptyData
+emptyModel : String -> Model
+emptyModel userId =
+    { userId = userId
+    , data = emptyData
     , message = "Initiating"
     }
 
 
-init : Model
-init =
-    emptyModel
+init : String -> Model
+init userId =
+    emptyModel userId
 
 
 type Msg
@@ -93,7 +96,8 @@ update msg model =
                 Query data ->
                     let
                         (people, cmds) =
-                            List.unzip ( List.map (updateHelp upp firstname (Inputs str)) data.people )
+                            List.unzip
+                                ( List.map (updateHelp firstname str) data.people )
 
                     in
                         { model | data = Query { data | people = people}} ! cmds
@@ -101,33 +105,19 @@ update msg model =
                 Mutation data ->
                         model ! []
 
-        Submit person  ->
+        Submit person ->
             { model | message = "Initiating update" }
-                ! [post person Error Get]
+                ! [post model.userId person Error Get]
 
 
-updateHelp upp firstname bob person =
+updateHelp : String -> String -> Person -> (Person, Cmd Msg)
+updateHelp firstname str person =
     if person.firstname /= firstname then
-        (person, Cmd.none)
+        person
+            ! []
     else
-        let
-            (newperson, cmds) =
-                upp bob person
-        in
-            ( newperson
-            , Cmd.map (Input newperson.firstname) cmds
-            )
-
-
-type Bob
-    = Inputs String
-
-upp bob person =
-    case bob of
-        Inputs str ->
-            { person | firstname = str }
-                ! []
-
+        { person | firstname = str }
+            ! []
 
 view : Model -> Html Msg
 view model =
@@ -172,9 +162,9 @@ personFormView person =
         ]
 
 
-mountCmd : Cmd Msg
-mountCmd =
-    get Error Get
+mountCmd : String -> Cmd Msg
+mountCmd userId =
+    get userId Error Get
 
 
 baseUrl : String
@@ -182,12 +172,12 @@ baseUrl =
     "http://localhost:3000/graphql?raw"
 
 
-get : (String -> a) -> (Result -> a) -> Cmd a
-get errorMsg msg =
+get : String -> (String -> a) -> (Result -> a) -> Cmd a
+get userId errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl
-        , body = Http.string (encode query)
+        , body = Http.string (encode (query userId))
         , headers =
             [ ( "Content-Type", "application/json" ) ]
         }
@@ -196,12 +186,12 @@ get errorMsg msg =
         |> Task.perform errorMsg msg
 
 
-post : Person -> (String -> a) -> (Result -> a) -> Cmd a
-post person errorMsg msg =
+post : String -> Person -> (String -> a) -> (Result -> a) -> Cmd a
+post userId person errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl
-        , body = Http.string (encode (mutation person.firstname))
+        , body = Http.string (encode (mutation userId person.firstname))
         , headers = [ ( "Content-Type", "application/json" ) ]
         }
         |> Http.fromJson resultDecoder
@@ -241,18 +231,18 @@ personDecoder =
         ("firstname" := JsonD.string)
 
 
-mutation : String -> JsonE.Value
-mutation firstname =
+mutation : String -> String -> JsonE.Value
+mutation userId firstname =
     JsonE.object
         [ ("query", JsonE.string ("mutation { updatePeople(values: {firstname: \"" ++ firstname ++ "\"},
-            options: {where: {email: \"Rey87@gmail.com\"}, returning: true}) { people { firstname}}}"))
+            options: {where: {email: \"" ++ userId ++ "\"}, returning: true}) { people { firstname}}}"))
         ]
 
 
-query : JsonE.Value
-query =
+query : String -> JsonE.Value
+query userId =
     JsonE.object
-        [ ("query", JsonE.string ("{people(where:{email:\"Rey87@gmail.com\"})
+        [ ("query", JsonE.string ("{people(where:{email:\"" ++ userId ++ "\"})
             {firstname}}"))
         ]
 
