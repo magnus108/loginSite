@@ -11,6 +11,7 @@ import UserUpdatePage
 import UnauthorizedPage
 import NotFoundPage
 import Html.App as App
+import Html.Attributes exposing (style)
 import Html exposing (Html, Attribute, div, text, ul, li)
 
 
@@ -230,20 +231,40 @@ view model =
                     div [] []
 
                 _ ->
-                    div []
-                        [ ul []
-                            [ li []
-                                [ Pages.linkTo (Pages.UserPage) [] [ text "Userpage" ]
-                                , Pages.linkTo (Pages.HomePage) [] [ text "Homepage" ]
-                                , Pages.linkTo (Pages.LogoutPage) [] [ text "Logoutpage" ]
+                    let
+                        links =
+                            linkifier model.currentPage
+                                [ (Pages.UserPage, "UserPage")
+                                , (Pages.HomePage, "HomePage")
+                                , (Pages.LogoutPage, "LogoutPage")
                                 ]
-                            ]
-                        ]
-
+                    in
+                        div [] [ ul [] links ]
         body =
             div [] [ viewPage model ]
     in
         div [] [ head, body ]
+
+
+linkifier : Pages.Page -> List ( Pages.Page, String ) -> List (Html Msg)
+linkifier currentPage xs =
+    List.map (\(page, content) ->
+        if currentPage == page then
+            li [ myStyle ]
+                [ Pages.linkTo page [] [ text content ]
+                ]
+        else
+            li []
+                [ Pages.linkTo page [] [ text content ]
+                ]
+            ) xs
+
+--this should prolly not be here
+myStyle =
+  style
+    [ ("pointer-events", "none")
+    , ("background-color", "red")
+    ]
 
 
 viewPage : Model -> Html Msg
