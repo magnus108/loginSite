@@ -153,7 +153,12 @@ urlUpdate result model =
             let
                 userId =
                     List.foldl (\person acc -> if person.email /= "" then Just person.email else Nothing ) Nothing model.loginPageModel.data.people
-
+                bob = 
+                    case userId of
+                        Nothing ->
+                            Debug.log "ohshit" []
+                        Just us ->
+                            Debug.log us []
             in
                 case page of
                     Pages.LoginPage ->

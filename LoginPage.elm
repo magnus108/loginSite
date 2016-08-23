@@ -65,10 +65,17 @@ update msg model =
                 ! []
 
         Get result ->
-            { model
-                | message = "This is your account"
-                , data = result.data
-            } ! [ Pages.navigate Pages.HomePage ]
+            let
+                data =
+                    if List.length result.data.people > 0 then
+                        result.data
+                    else
+                        emptyData
+            in
+                { model
+                    | message = "This is your account"
+                    , data = data
+                } ! [ Pages.navigate Pages.HomePage ]
 
         Error err ->
             { model | message = "Oops! An error occurred: " ++ err }
