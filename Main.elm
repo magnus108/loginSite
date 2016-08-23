@@ -3,10 +3,12 @@ module Main exposing (..)
 import Navigation
 import Pages
 import LoginPage
+import LogoutPage
 import HomePage
 import TravelPage
 import UserPage
 import UserUpdatePage
+import UnauthorizedPage
 import Html.App as App
 import Html exposing (Html, Attribute, div, text, ul, li)
 
@@ -25,10 +27,12 @@ main =
 type alias Model =
     { currentPage : Pages.Page
     , loginPageModel : LoginPage.Model
+    , logoutPageModel : LogoutPage.Model
     , homePageModel : HomePage.Model
     , travelPageModel : TravelPage.Model
     , userPageModel : UserPage.Model
     , userUpdatePageModel : UserUpdatePage.Model
+    , unauthorizedPageModel : UnauthorizedPage.Model
     }
 
 
@@ -36,10 +40,12 @@ initialModel : Model
 initialModel =
     { currentPage = Pages.LoginPage
     , loginPageModel = LoginPage.init
+    , logoutPageModel = LogoutPage.init
     , homePageModel = HomePage.init
     , travelPageModel = TravelPage.init
     , userPageModel = UserPage.init
     , userUpdatePageModel = UserUpdatePage.init
+    , unauthorizedPageModel = UnauthorizedPage.init
     }
 
 
@@ -51,10 +57,12 @@ init result =
 type Msg
     = NoOp
     | LoginPageMsg LoginPage.Msg
+    | LogoutPageMsg LogoutPage.Msg
     | HomePageMsg HomePage.Msg
     | TravelPageMsg TravelPage.Msg
     | UserPageMsg UserPage.Msg
     | UserUpdatePageMsg UserUpdatePage.Msg
+    | UnauthorizedPageMsg UnauthorizedPage.Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -70,6 +78,14 @@ update msg model =
             in
                 { model | loginPageModel = subMdl }
                     ! [ Cmd.map LoginPageMsg subCmd ]
+
+        LogoutPageMsg m ->
+            let
+                ( subMdl, subCmd ) =
+                    LogoutPage.update m model.logoutPageModel
+            in
+                { model | logoutPageModel = subMdl }
+                    ! [ Cmd.map LogoutPageMsg subCmd ]
 
         HomePageMsg m ->
             let
@@ -103,6 +119,14 @@ update msg model =
                 { model | userUpdatePageModel = subMdl }
                     ! [ Cmd.map UserUpdatePageMsg subCmd ]
 
+        UnauthorizedPageMsg m ->
+            let
+                ( subMdl, subCmd ) =
+                    UnauthorizedPage.update m model.unauthorizedPageModel
+            in
+                { model | unauthorizedPageModel = subMdl }
+                    ! [ Cmd.map UnauthorizedPageMsg subCmd ]
+
 
 urlUpdate : Result String Pages.Page -> Model -> ( Model, Cmd Msg )
 urlUpdate result model =
@@ -113,12 +137,20 @@ urlUpdate result model =
         Ok page ->
             let
                 userId =
-                    List.foldl (\person acc -> Just person.email ) Nothing model.loginPageModel.data.people
+                    List.foldl (\person acc -> if person.email /= "" then Just person.email else Nothing ) Nothing model.loginPageModel.data.people
+
             in
                 case page of
                     Pages.LoginPage ->
                         { model
                             | currentPage = page
+                        }
+                            ! []
+
+                    Pages.LogoutPage ->
+                        { model
+                            | currentPage = page
+                            , loginPageModel = LoginPage.init
                         }
                             ! []
 
@@ -146,37 +178,52 @@ urlUpdate result model =
                         }
                             ! [ Cmd.map UserUpdatePageMsg (UserUpdatePage.mountCmd userId) ]
 
+                    Pages.UnauthorizedPage ->
+                        { model
+                            | currentPage = page
+                        }
+                            ! []
+
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ ul []
-            [ li []
-                [ Pages.linkTo (Pages.UserPage) [] [ text "Userpage" ]
-                , Pages.linkTo (Pages.HomePage) [] [ text "Homepage" ]
-                ]
-            ]
-        , viewPage model ]
+    let
+        head =
+            case model.currentPage of
+                Pages.LoginPage ->
+                    div [] []
 
+                Pages.LogoutPage ->
+                    div [] []
 
--- viewAUTHENTICATE????
--- viewAUTHENTICATE????
--- viewAUTHENTICATE????
--- viewAUTHENTICATE????
--- viewAUTHENTICATE????
--- viewAUTHENTICATE????
--- viewAUTHENTICATE????
--- viewAUTHENTICATE????
--- viewAUTHENTICATE????
--- viewAUTHENTICATE????
--- viewAUTHENTICATE????
--- viewAUTHENTICATE????
+                Pages.UnauthorizedPage ->
+                    div [] []
+
+                _ ->
+                    div []
+                        [ ul []
+                            [ li []
+                                [ Pages.linkTo (Pages.UserPage) [] [ text "Userpage" ]
+                                , Pages.linkTo (Pages.HomePage) [] [ text "Homepage" ]
+                                , Pages.linkTo (Pages.LogoutPage) [] [ text "Logoutpage" ]
+                                ]
+                            ]
+                        ]
+
+        body =
+            div [] [ viewPage model ]
+    in
+        div [] [ head, body ]
+
 
 viewPage : Model -> Html Msg
 viewPage model =
     case model.currentPage of
         Pages.LoginPage ->
             App.map LoginPageMsg <| LoginPage.view model.loginPageModel
+
+        Pages.LogoutPage ->
+            App.map LogoutPageMsg <| LogoutPage.view model.logoutPageModel
 
         Pages.HomePage ->
             App.map HomePageMsg <| HomePage.view model.homePageModel
@@ -190,6 +237,8 @@ viewPage model =
         Pages.UserUpdatePage ->
             App.map UserUpdatePageMsg <| UserUpdatePage.view model.userUpdatePageModel
 
+        Pages.UnauthorizedPage ->
+            App.map UnauthorizedPageMsg <| UnauthorizedPage.view model.unauthorizedPageModel
 
 
 subscriptions : Model -> Sub Msg

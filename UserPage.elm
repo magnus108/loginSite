@@ -92,7 +92,7 @@ mountCmd : Maybe String -> Cmd Msg
 mountCmd userId =
     case userId of
         Nothing ->
-            Cmd.none
+            Pages.navigate Pages.UnauthorizedPage
         Just email ->
             get email Error Get
 

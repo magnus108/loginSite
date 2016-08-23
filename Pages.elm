@@ -13,6 +13,9 @@ toHash page =
         LoginPage ->
             "#loginpage"
 
+        LogoutPage ->
+            "#logoutpage"
+
         HomePage ->
             "#homepage"
 
@@ -25,6 +28,9 @@ toHash page =
         UserUpdatePage ->
             "#userupdatepage"
 
+        UnauthorizedPage ->
+            "#unauthorizedpage"
+
 hashParser : Navigation.Location -> Result String Page
 hashParser location =
     UrlParser.parse identity pageParser (String.dropLeft 1 location.hash)
@@ -32,20 +38,24 @@ hashParser location =
 
 type Page
     = LoginPage
+    | LogoutPage
     | HomePage
     | TravelPage Int
     | UserPage
     | UserUpdatePage
+    | UnauthorizedPage
 
 
 pageParser : Parser (Page -> a) a
 pageParser =
     oneOf
         [ format LoginPage (s "loginpage")
+        , format LogoutPage (s "logoutpage")
         , format HomePage (s "homepage")
         , format TravelPage (s "travelpage" </> int)
         , format UserPage (s "userpage")
         , format UserUpdatePage (s "userupdatepage")
+        , format UnauthorizedPage (s "unauthorizedpage")
         ]
 
 

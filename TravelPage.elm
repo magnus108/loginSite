@@ -1,5 +1,6 @@
 module TravelPage exposing (..)
 
+import Pages
 import Html exposing (Html, div, text, h3, ul, li, span)
 import Json.Decode as JsonD exposing ((:=))
 import Json.Encode as JsonE
@@ -103,7 +104,7 @@ mountCmd : Maybe String -> Int -> Cmd Msg
 mountCmd userId id =
     case userId of
         Nothing ->
-            Cmd.none
+            Pages.navigate Pages.UnauthorizedPage
         Just email ->
             get email id Error Get
 

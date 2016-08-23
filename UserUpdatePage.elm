@@ -1,5 +1,6 @@
 module UserUpdatePage exposing (..)
 
+import Pages
 import Html exposing (Html, div, text, form, input, h3, ul, li, span)
 import Html.Attributes exposing (type', placeholder, value)
 import Html.Events exposing (onInput, onSubmit)
@@ -174,9 +175,12 @@ mountCmd : Maybe String -> Cmd Msg
 mountCmd userId =
     case userId of
         Nothing ->
-            Cmd.none
+            Pages.navigate Pages.UnauthorizedPage
         Just email ->
-            Cmd.batch [Cmd.map (SetUser userId), get email Error Get]
+            Cmd.batch
+                [ Task.perform identity identity (Task.succeed (SetUser userId))
+                , get email Error Get
+                ]
 
 
 baseUrl : String
