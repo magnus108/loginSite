@@ -31,6 +31,9 @@ toHash page =
         UnauthorizedPage ->
             "#unauthorizedpage"
 
+        NotFoundPage ->
+            "#notfoundpage"
+
 hashParser : Navigation.Location -> Result String Page
 hashParser location =
     UrlParser.parse identity pageParser (String.dropLeft 1 location.hash)
@@ -44,6 +47,7 @@ type Page
     | UserPage
     | UserUpdatePage
     | UnauthorizedPage
+    | NotFoundPage
 
 
 pageParser : Parser (Page -> a) a
@@ -56,6 +60,7 @@ pageParser =
         , format UserPage (s "userpage")
         , format UserUpdatePage (s "userupdatepage")
         , format UnauthorizedPage (s "unauthorizedpage")
+        , format NotFoundPage (s "notfoundpage")
         ]
 
 

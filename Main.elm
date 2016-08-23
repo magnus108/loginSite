@@ -9,6 +9,7 @@ import TravelPage
 import UserPage
 import UserUpdatePage
 import UnauthorizedPage
+import NotFoundPage
 import Html.App as App
 import Html exposing (Html, Attribute, div, text, ul, li)
 
@@ -33,6 +34,7 @@ type alias Model =
     , userPageModel : UserPage.Model
     , userUpdatePageModel : UserUpdatePage.Model
     , unauthorizedPageModel : UnauthorizedPage.Model
+    , notFoundPageModel : NotFoundPage.Model
     }
 
 
@@ -46,6 +48,7 @@ initialModel =
     , userPageModel = UserPage.init
     , userUpdatePageModel = UserUpdatePage.init
     , unauthorizedPageModel = UnauthorizedPage.init
+    , notFoundPageModel = NotFoundPage.init
     }
 
 
@@ -63,6 +66,7 @@ type Msg
     | UserPageMsg UserPage.Msg
     | UserUpdatePageMsg UserUpdatePage.Msg
     | UnauthorizedPageMsg UnauthorizedPage.Msg
+    | NotFoundPageMsg NotFoundPage.Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -127,12 +131,23 @@ update msg model =
                 { model | unauthorizedPageModel = subMdl }
                     ! [ Cmd.map UnauthorizedPageMsg subCmd ]
 
+        NotFoundPageMsg m ->
+            let
+                ( subMdl, subCmd ) =
+                    NotFoundPage.update m model.notFoundPageModel
+            in
+                { model | notFoundPageModel = subMdl }
+                    ! [ Cmd.map NotFoundPageMsg subCmd ]
+
 
 urlUpdate : Result String Pages.Page -> Model -> ( Model, Cmd Msg )
 urlUpdate result model =
     case result of
         Err _ ->
-            model ! [ Pages.modify model.currentPage ]
+            { model
+                | currentPage = Pages.NotFoundPage
+            }
+                ! [ Pages.modify Pages.NotFoundPage ]
 
         Ok page ->
             let
@@ -184,6 +199,12 @@ urlUpdate result model =
                         }
                             ! []
 
+                    Pages.NotFoundPage ->
+                        { model
+                            | currentPage = page
+                        }
+                            ! []
+
 
 view : Model -> Html Msg
 view model =
@@ -197,6 +218,10 @@ view model =
                     div [] []
 
                 Pages.UnauthorizedPage ->
+                    div [] []
+
+----- AHHH FORKSEL HER om man er loget ind eller ej gør igen forskel for denne
+                Pages.NotFoundPage ->
                     div [] []
 
                 _ ->
@@ -239,6 +264,9 @@ viewPage model =
 
         Pages.UnauthorizedPage ->
             App.map UnauthorizedPageMsg <| UnauthorizedPage.view model.unauthorizedPageModel
+
+        Pages.NotFoundPage ->
+            App.map NotFoundPageMsg <| NotFoundPage.view model.notFoundPageModel
 
 
 subscriptions : Model -> Sub Msg
