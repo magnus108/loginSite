@@ -8,7 +8,7 @@ import Task
 
 
 type alias Model =
-    { userId : String
+    { userId : Maybe String
     , data : Data
     , message : String
     }
@@ -40,17 +40,17 @@ emptyData =
     { people = [] }
 
 
-emptyModel : String -> Model
-emptyModel userId =
-    { userId = userId
+emptyModel : Model
+emptyModel =
+    { userId = Nothing
     , data = emptyData
     , message = "Initiating"
     }
 
 
-init : String -> Model
-init userId =
-    emptyModel userId
+init : Model
+init =
+    emptyModel
 
 
 type Msg
@@ -99,9 +99,13 @@ travelView travel =
         ]
 
 
-mountCmd : String -> Int -> Cmd Msg
+mountCmd : Maybe String -> Int -> Cmd Msg
 mountCmd userId id =
-    get userId id Error Get
+    case userId of
+        Nothing ->
+            Cmd.none
+        Just email ->
+            get email id Error Get
 
 
 baseUrl : String

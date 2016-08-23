@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Navigation
 import Pages
+import LoginPage
 import HomePage
 import TravelPage
 import UserPage
@@ -21,11 +22,9 @@ main =
         }
 
 
--- remove this 
-userId = "Reba.Waelchi@yahoo.com"
-
 type alias Model =
     { currentPage : Pages.Page
+    , loginPageModel : LoginPage.Model
     , homePageModel : HomePage.Model
     , travelPageModel : TravelPage.Model
     , userPageModel : UserPage.Model
@@ -35,11 +34,12 @@ type alias Model =
 
 initialModel : Model
 initialModel =
-    { currentPage = Pages.HomePage
-    , homePageModel = HomePage.init userId
-    , travelPageModel = TravelPage.init userId
-    , userPageModel = UserPage.init userId
-    , userUpdatePageModel = UserUpdatePage.init userId
+    { currentPage = Pages.LoginPage
+    , loginPageModel = LoginPage.init
+    , homePageModel = HomePage.init
+    , travelPageModel = TravelPage.init
+    , userPageModel = UserPage.init
+    , userUpdatePageModel = UserUpdatePage.init
     }
 
 
@@ -50,6 +50,7 @@ init result =
 
 type Msg
     = NoOp
+    | LoginPageMsg LoginPage.Msg
     | HomePageMsg HomePage.Msg
     | TravelPageMsg TravelPage.Msg
     | UserPageMsg UserPage.Msg
@@ -58,6 +59,18 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        NoOp ->
+            model
+                ! []
+
+        LoginPageMsg m ->
+            let
+                ( subMdl, subCmd ) =
+                    LoginPage.update m model.loginPageModel
+            in
+                { model | loginPageModel = subMdl }
+                    ! [ Cmd.map LoginPageMsg subCmd ]
+
         HomePageMsg m ->
             let
                 ( subMdl, subCmd ) =
@@ -89,8 +102,6 @@ update msg model =
             in
                 { model | userUpdatePageModel = subMdl }
                     ! [ Cmd.map UserUpdatePageMsg subCmd ]
-        _ ->
-            model ! []
 
 
 urlUpdate : Result String Pages.Page -> Model -> ( Model, Cmd Msg )
@@ -100,30 +111,40 @@ urlUpdate result model =
             model ! [ Pages.modify model.currentPage ]
 
         Ok page ->
-            case page of
-                Pages.HomePage ->
-                    { model
-                        | currentPage = page
-                    }
-                        ! [ Cmd.map HomePageMsg (HomePage.mountCmd model.homePageModel.userId) ]
+            let
+                userId =
+                    List.foldl (\person acc -> Just person.email ) Nothing model.loginPageModel.data.people
+            in
+                case page of
+                    Pages.LoginPage ->
+                        { model
+                            | currentPage = page
+                        }
+                            ! []
 
-                Pages.TravelPage id ->
-                    { model
-                        | currentPage = page
-                    }
-                        ! [ Cmd.map TravelPageMsg (TravelPage.mountCmd model.travelPageModel.userId id)]
+                    Pages.HomePage ->
+                        { model
+                            | currentPage = page
+                        }
+                            ! [ Cmd.map HomePageMsg (HomePage.mountCmd userId) ]
 
-                Pages.UserPage ->
-                    { model
-                        | currentPage = page
-                    }
-                        ! [ Cmd.map UserPageMsg (UserPage.mountCmd model.userPageModel.userId ) ]
+                    Pages.TravelPage id ->
+                        { model
+                            | currentPage = page
+                        }
+                            ! [ Cmd.map TravelPageMsg (TravelPage.mountCmd userId id)]
 
-                Pages.UserUpdatePage ->
-                    { model
-                        | currentPage = page
-                    }
-                        ! [ Cmd.map UserUpdatePageMsg (UserUpdatePage.mountCmd model.userUpdatePageModel.userId) ]
+                    Pages.UserPage ->
+                        { model
+                            | currentPage = page
+                        }
+                            ! [ Cmd.map UserPageMsg (UserPage.mountCmd userId ) ]
+
+                    Pages.UserUpdatePage ->
+                        { model
+                            | currentPage = page
+                        }
+                            ! [ Cmd.map UserUpdatePageMsg (UserUpdatePage.mountCmd userId) ]
 
 
 view : Model -> Html Msg
@@ -138,9 +159,25 @@ view model =
         , viewPage model ]
 
 
+-- viewAUTHENTICATE????
+-- viewAUTHENTICATE????
+-- viewAUTHENTICATE????
+-- viewAUTHENTICATE????
+-- viewAUTHENTICATE????
+-- viewAUTHENTICATE????
+-- viewAUTHENTICATE????
+-- viewAUTHENTICATE????
+-- viewAUTHENTICATE????
+-- viewAUTHENTICATE????
+-- viewAUTHENTICATE????
+-- viewAUTHENTICATE????
+
 viewPage : Model -> Html Msg
 viewPage model =
     case model.currentPage of
+        Pages.LoginPage ->
+            App.map LoginPageMsg <| LoginPage.view model.loginPageModel
+
         Pages.HomePage ->
             App.map HomePageMsg <| HomePage.view model.homePageModel
 
@@ -152,6 +189,7 @@ viewPage model =
 
         Pages.UserUpdatePage ->
             App.map UserUpdatePageMsg <| UserUpdatePage.view model.userUpdatePageModel
+
 
 
 subscriptions : Model -> Sub Msg

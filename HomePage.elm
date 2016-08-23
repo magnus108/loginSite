@@ -10,7 +10,7 @@ import Task
 
 
 type alias Model =
-    { userId : String
+    { userId : Maybe String
     , data : Data
     , message : String
     }
@@ -42,16 +42,16 @@ emptyData =
     { people = [] }
 
 
-emptyModel : String -> Model
-emptyModel userId =
-    { userId = userId
+emptyModel : Model
+emptyModel =
+    { userId = Nothing
     , data = emptyData
     , message = "Initiating"
     }
 
-init : String -> Model
-init userId =
-    emptyModel userId
+init : Model
+init =
+    emptyModel
 
 
 type Msg
@@ -164,6 +164,10 @@ encode =
     JsonE.encode 0
 
 
-mountCmd : String -> Cmd Msg
+mountCmd : Maybe String -> Cmd Msg
 mountCmd userId =
-    get userId Error Get
+    case userId of
+        Nothing ->
+            Cmd.none
+        Just email ->
+            get email Error Get

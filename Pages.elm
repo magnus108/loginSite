@@ -4,13 +4,15 @@ import UrlParser exposing (Parser, parse, (</>), format, int, oneOf, s, string)
 import Navigation exposing (Location)
 import Html exposing (Html, Attribute, a)
 import Html.Attributes exposing (href)
-
 import String
 
 
 toHash : Page -> String
 toHash page =
     case page of
+        LoginPage ->
+            "#loginpage"
+
         HomePage ->
             "#homepage"
 
@@ -29,7 +31,8 @@ hashParser location =
 
 
 type Page
-    = HomePage
+    = LoginPage
+    | HomePage
     | TravelPage Int
     | UserPage
     | UserUpdatePage
@@ -38,7 +41,8 @@ type Page
 pageParser : Parser (Page -> a) a
 pageParser =
     oneOf
-        [ format HomePage (s "homepage")
+        [ format LoginPage (s "loginpage")
+        , format HomePage (s "homepage")
         , format TravelPage (s "travelpage" </> int)
         , format UserPage (s "userpage")
         , format UserUpdatePage (s "userupdatepage")

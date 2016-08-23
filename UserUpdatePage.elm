@@ -25,7 +25,7 @@ type Data
 
 
 type alias Model =
-    { userId : String
+    { userId : Maybe String
     , data : Data
     , message : String
     }
@@ -46,17 +46,17 @@ emptyData =
     Query { people = [] }
 
 
-emptyModel : String -> Model
-emptyModel userId =
-    { userId = userId
+emptyModel : Model
+emptyModel =
+    { userId = Nothing
     , data = emptyData
     , message = "Initiating"
     }
 
 
-init : String -> Model
-init userId =
-    emptyModel userId
+init : Model
+init =
+    emptyModel
 
 
 type Msg
@@ -65,6 +65,7 @@ type Msg
     | Get Result
     | Submit Person
     | Input String String
+    | SetUser (Maybe String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -106,9 +107,16 @@ update msg model =
                         model ! []
 
         Submit person ->
-            { model | message = "Initiating update" }
-                ! [post model.userId person Error Get]
+            case model.userId of
+                Nothing ->
+                    { model | message = "Missing userId" }
+                        ! []
+                Just userId ->
+                    { model | message = "Initiating update" }
+                        ! [post userId person Error Get]
 
+        SetUser userId ->
+            { model | userId = userId } ! []
 
 updateHelp : String -> String -> Person -> (Person, Cmd Msg)
 updateHelp firstname str person =
@@ -162,9 +170,13 @@ personFormView person =
         ]
 
 
-mountCmd : String -> Cmd Msg
+mountCmd : Maybe String -> Cmd Msg
 mountCmd userId =
-    get userId Error Get
+    case userId of
+        Nothing ->
+            Cmd.none
+        Just email ->
+            Cmd.batch [Cmd.map (SetUser userId), get email Error Get]
 
 
 baseUrl : String
