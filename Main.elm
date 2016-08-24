@@ -163,10 +163,17 @@ urlUpdate result model =
             in
                 case page of
                     Pages.LoginPage ->
-                        { model
-                            | currentPage = page
-                        }
-                            ! []
+                        case userId of
+                            Nothing ->
+                                { model
+                                    | currentPage = page
+                                }
+                                    ! []
+                            Just uid ->
+                                { model
+                                    | currentPage = page
+                                }
+                                    ! [Pages.navigate Pages.HomePage]
 
                     Pages.LogoutPage ->
                         { model
@@ -237,6 +244,8 @@ view model =
                                 [ (Pages.UserPage, "UserPage")
                                 , (Pages.HomePage, "HomePage")
                                 , (Pages.LogoutPage, "LogoutPage")
+                                , (Pages.LoginPage, "LoginPage should not go here")
+                                , (Pages.NotFoundPage, "LogoutPage should not go here")
                                 ]
                     in
                         div [] [ ul [] links ]
@@ -249,7 +258,9 @@ view model =
 linkifier : Pages.Page -> List ( Pages.Page, String ) -> List (Html Msg)
 linkifier currentPage xs =
     List.map (\(page, content) ->
-        if currentPage == page then
+        -- REAL ugly fix and only works for now since we dont have notfoundpage and unauthorizedpage with params.
+        if currentPage == page || page == Pages.LoginPage
+            && (not (List.member currentPage [Pages.NotFoundPage, Pages.UnauthorizedPage]))  then
             li [ myStyle ]
                 [ Pages.linkTo page [] [ text content ]
                 ]

@@ -1,7 +1,7 @@
 module NotFoundPage exposing (..)
 
 import Pages
-import Html exposing (Html, Attribute, div, text, form, input, h3, ul, li)
+import Html exposing (Html, Attribute, div, text, h3)
 import Html.Attributes exposing (type', placeholder, value)
 import Html.Events exposing (onInput, onSubmit)
 import Json.Decode as JsonD exposing ((:=))
@@ -13,6 +13,7 @@ import Task
 type alias Model =
     { title : String
     , text : String
+    , linkText : String
     }
 
 
@@ -20,6 +21,7 @@ emptyModel : Model
 emptyModel =
     { title = "Not Found"
     , text = "The Page you are looking for was not found"
+    , linkText = "Go to frontpage"
     }
 
 
@@ -49,6 +51,7 @@ view model =
         body =
             div []
                 [ text model.text
+                , Pages.linkTo (Pages.LoginPage) [] [ text model.linkText ]
                 ]
     in
         div [] [ head, body ]
