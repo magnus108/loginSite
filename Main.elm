@@ -11,9 +11,13 @@ import UserUpdatePage
 import UnauthorizedPage
 import NotFoundPage
 import Html.App as App
-import Html.Attributes exposing (style)
-import Html exposing (Html, Attribute, div, text, ul, li)
+import Html exposing (Html, Attribute, node, div, text, ul, li, nav)
 
+import Html.Attributes exposing (style, type')
+import Css exposing (..)
+import Css.Namespace exposing (namespace)
+import Css.Elements
+import Html.CssHelpers exposing (withNamespace)
 
 main : Program Never
 main =
@@ -154,12 +158,6 @@ urlUpdate result model =
             let
                 userId =
                     List.foldl (\person acc -> if person.email /= "" then Just person.email else Nothing ) Nothing model.loginPageModel.data.people
-                bob = 
-                    case userId of
-                        Nothing ->
-                            Debug.log "ohshit" []
-                        Just us ->
-                            Debug.log us []
             in
                 case page of
                     Pages.LoginPage ->
@@ -219,9 +217,67 @@ urlUpdate result model =
                             ! []
 
 
+
+
+
+
+--this whole is to not have conficting namespaces in diffrent components
+
+type CssClasses
+    = Navbar
+    | Active
+    | Hover
+
+
+navbarNamespace : Html.CssHelpers.Namespace String class id msg
+navbarNamespace =
+    withNamespace "navbar"
+
+greyColor = rgb 230 23 230
+
+css : Css.Stylesheet
+css =
+    (stylesheet << namespace navbarNamespace.name)
+        [ (#) Navbar
+            [ padding (Css.em 1)
+            , backgroundColor greyColor
+            , descendants
+                [ Css.Elements.li
+                    [ display inlineBlock
+                    , margin (Css.rem 1)
+                    , children
+                        [ Css.Elements.a
+                            [ display inlineBlock
+                            , textDecoration none
+                            , textTransform uppercase
+                            , backgroundColor (rgba 0 0 0 0.1)
+                            , padding (Css.rem 1)
+                            , (withClass Active)
+                                [ fontWeight bold
+                                , property "pointer-events" "none"
+                                , backgroundColor (rgba 0 0 0 0.6)
+                                ]
+                            ]
+                        , Css.Elements.a
+                            [ hover
+                                [ backgroundColor (rgba 1 0 0 1)
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+
+
+
 view : Model -> Html Msg
 view model =
     let
+
+        compiled =
+            compile css
+
         head =
             case model.currentPage of
                 Pages.LoginPage ->
@@ -239,43 +295,46 @@ view model =
 
                 _ ->
                     let
+--- this should maybe go somewere too???
+
+                        { id } =
+                            navbarNamespace
+
                         links =
                             linkifier model.currentPage
                                 [ (Pages.UserPage, "UserPage")
                                 , (Pages.HomePage, "HomePage")
                                 , (Pages.LogoutPage, "LogoutPage")
                                 , (Pages.LoginPage, "LoginPage should not go here")
-                                , (Pages.NotFoundPage, "LogoutPage should not go here")
+                                , (Pages.NotFoundPage, "notfoundpage should not go here")
                                 ]
                     in
-                        div [] [ ul [] links ]
+                        nav [ id Navbar ] [ ul [] links ]
         body =
             div [] [ viewPage model ]
     in
-        div [] [ head, body ]
+        div [] [
+            --begone filth
+            node "style" [type' "text/css" ] [ text compiled.css ]
+            , head, body ]
 
 
 linkifier : Pages.Page -> List ( Pages.Page, String ) -> List (Html Msg)
 linkifier currentPage xs =
-    List.map (\(page, content) ->
-        -- REAL ugly fix and only works for now since we dont have notfoundpage and unauthorizedpage with params.
-        if currentPage == page || page == Pages.LoginPage
-            && (not (List.member currentPage [Pages.NotFoundPage, Pages.UnauthorizedPage]))  then
-            li [ myStyle ]
-                [ Pages.linkTo page [] [ text content ]
-                ]
-        else
-            li []
-                [ Pages.linkTo page [] [ text content ]
-                ]
-            ) xs
-
---this should prolly not be here
-myStyle =
-  style
-    [ ("pointer-events", "none")
-    , ("background-color", "red")
-    ]
+    -- REAL ugly fix and only works for now since we dont have notfoundpage and unauthorizedpage with params.
+    let
+        { classList } =
+            navbarNamespace
+    in
+        List.map (\(page, content) ->
+            let
+                isActive = currentPage == page || page == Pages.LoginPage
+                    && (not (List.member currentPage [Pages.NotFoundPage, Pages.UnauthorizedPage]))
+            in
+                li [ ]
+                    [ Pages.linkTo page [classList [(Active, isActive)]] [ text content ]
+                    ]
+        ) xs
 
 
 viewPage : Model -> Html Msg
