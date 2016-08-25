@@ -19,6 +19,8 @@ import Css.Namespace exposing (namespace)
 import Css.Elements
 import Html.CssHelpers exposing (withNamespace)
 
+import MainCss
+
 main : Program Never
 main =
     Navigation.program Pages.urlParser
@@ -221,68 +223,6 @@ urlUpdate result model =
 
 
 
---this whole is to not have conficting namespaces in diffrent components
-
-type CssClasses
-    = Navbar
-    | Active
-    | Hover
-
-
-navbarNamespace : Html.CssHelpers.Namespace String class id msg
-navbarNamespace =
-    withNamespace "navbar"
-
---colors
-whiteColor = rgba 255 255 255
-
-css : Css.Stylesheet
-css =
-    (stylesheet << namespace navbarNamespace.name)
-        [ (#) Navbar
-            [ backgroundColor (rgba 0 150 136 1)
-            , descendants
-                [ Css.Elements.ul
-                    [ margin (Css.em 0)
-                    , padding (Css.em 0)
-                    , descendants
-                        [ Css.Elements.li
-                            [ display inlineBlock
-                            , children
-                                [ Css.Elements.a
-                                    [ color (whiteColor 0.6)
-                                    , display inlineBlock
-                                    , textDecoration none
-                                    , textTransform uppercase
-                                    , property "font-family" "'Helvetica','Arial',sans-serif"
-                                    , height (Css.px 48)
-                                    , lineHeight (Css.px 48)
-                                    , property "text-align" "center"
-                                    , fontSize (Css.px 14)
-                                    , padding (Css.rem 1)
-                                    , paddingRight (Css.rem 2)
-                                    , paddingLeft (Css.rem 2)
-                                    , fontWeight bold
-                                    , (withClass Active)
-                                        [ fontWeight bold
-                                        , color (whiteColor 1)
-                                        , property "pointer-events" "none"
-                                        , property "border-bottom" "2px solid rgb(254, 86,86)"
-                                        , backgroundColor (rgba 38 166 154 1)
-                                        ]
-                                    ]
-                                , Css.Elements.a
-                                    [ hover
-                                        [ backgroundColor (rgba 38 166 154 1)
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
 
 
 
@@ -291,7 +231,10 @@ view model =
     let
 
         compiled =
-            compile css
+            compile MainCss.css
+--- this should maybe go somewere too???
+        { id, class } =
+            MainCss.navbarNamespace
 
         head =
             case model.currentPage of
@@ -311,10 +254,6 @@ view model =
                 _ ->
                     let
 --- this should maybe go somewere too???
-
-                        { id } =
-                            navbarNamespace
-
                         links =
                             linkifier model.currentPage
                                 [ (Pages.UserPage, "UserPage")
@@ -324,9 +263,9 @@ view model =
                                 , (Pages.NotFoundPage, "notfoundpage should not go here")
                                 ]
                     in
-                        nav [ id Navbar ] [ ul [] links ]
+                        nav [ id MainCss.Navbar ] [ ul [ class [MainCss.List] ] links ]
         body =
-            div [] [ viewPage model ]
+            div [ class [MainCss.Content] ] [ viewPage model ]
     in
         div [] [
             --begone filth
@@ -339,7 +278,7 @@ linkifier currentPage xs =
     -- REAL ugly fix and only works for now since we dont have notfoundpage and unauthorizedpage with params.
     let
         { classList } =
-            navbarNamespace
+            MainCss.navbarNamespace
     in
         List.map (\(page, content) ->
             let
@@ -347,7 +286,7 @@ linkifier currentPage xs =
                     && (not (List.member currentPage [Pages.NotFoundPage, Pages.UnauthorizedPage]))
             in
                 li [ ]
-                    [ Pages.linkTo page [classList [(Active, isActive)]] [ text content ]
+                    [ Pages.linkTo page [classList [(MainCss.Active, isActive)]] [ text content ]
                     ]
         ) xs
 
