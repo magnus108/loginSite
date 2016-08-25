@@ -233,34 +233,49 @@ navbarNamespace : Html.CssHelpers.Namespace String class id msg
 navbarNamespace =
     withNamespace "navbar"
 
-greyColor = rgb 230 23 230
+--colors
+whiteColor = rgba 255 255 255
 
 css : Css.Stylesheet
 css =
     (stylesheet << namespace navbarNamespace.name)
         [ (#) Navbar
-            [ padding (Css.em 1)
-            , backgroundColor greyColor
+            [ backgroundColor (rgba 0 150 136 1)
             , descendants
-                [ Css.Elements.li
-                    [ display inlineBlock
-                    , margin (Css.rem 1)
-                    , children
-                        [ Css.Elements.a
+                [ Css.Elements.ul
+                    [ margin (Css.em 0)
+                    , padding (Css.em 0)
+                    , descendants
+                        [ Css.Elements.li
                             [ display inlineBlock
-                            , textDecoration none
-                            , textTransform uppercase
-                            , backgroundColor (rgba 0 0 0 0.1)
-                            , padding (Css.rem 1)
-                            , (withClass Active)
-                                [ fontWeight bold
-                                , property "pointer-events" "none"
-                                , backgroundColor (rgba 0 0 0 0.6)
-                                ]
-                            ]
-                        , Css.Elements.a
-                            [ hover
-                                [ backgroundColor (rgba 1 0 0 1)
+                            , children
+                                [ Css.Elements.a
+                                    [ color (whiteColor 0.6)
+                                    , display inlineBlock
+                                    , textDecoration none
+                                    , textTransform uppercase
+                                    , property "font-family" "'Helvetica','Arial',sans-serif"
+                                    , height (Css.px 48)
+                                    , lineHeight (Css.px 48)
+                                    , property "text-align" "center"
+                                    , fontSize (Css.px 14)
+                                    , padding (Css.rem 1)
+                                    , paddingRight (Css.rem 2)
+                                    , paddingLeft (Css.rem 2)
+                                    , fontWeight bold
+                                    , (withClass Active)
+                                        [ fontWeight bold
+                                        , color (whiteColor 1)
+                                        , property "pointer-events" "none"
+                                        , property "border-bottom" "2px solid rgb(254, 86,86)"
+                                        , backgroundColor (rgba 38 166 154 1)
+                                        ]
+                                    ]
+                                , Css.Elements.a
+                                    [ hover
+                                        [ backgroundColor (rgba 38 166 154 1)
+                                        ]
+                                    ]
                                 ]
                             ]
                         ]
