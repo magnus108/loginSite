@@ -1,7 +1,7 @@
 module TravelPage exposing (..)
 
 import Pages
-import Html exposing (Html, div, text, h3, ul, li, span)
+import Html exposing (Html, div, text, h3, ul, li, span, img)
 import Json.Decode as JsonD exposing ((:=))
 import Json.Encode as JsonE
 import Http
@@ -97,7 +97,7 @@ view model =
 
         travelView travel =
             li []
-                [ span [] [ icon travel.status ]
+                [ span [class [MainCss.Icon]] [ icon travel.status ]
                 , Html.text travel.destination
                 ]
 
@@ -105,7 +105,7 @@ view model =
             case status of
                 _ ->
                     svg
-                        [ version "1.1", fill "#000000", height "24", viewBox "0 0 24 24", width "24"
+                        [ version "1.1", fill "#000000",  viewBox "0 0 24 24"
                         ]
                         [ Svg.path [d "M0 0h24v25H0z", fill "none"] []
                         , circle [cx "12", cy "4", r "2"] []

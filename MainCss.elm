@@ -13,6 +13,7 @@ type CssClasses
     | Content
     | List
     | Headline
+    | Icon
 
 
 navbarNamespace : Html.CssHelpers.Namespace String class id msg
@@ -25,6 +26,7 @@ whiteColor = rgba 255 255 255
 
 primary1 = rgba 0 150 136 1
 primary2 = rgba 38 166 154 1
+primary3 = rgba 0 69 62 1
 
 warning1 = rgba 254 86 86 1
 
@@ -37,7 +39,8 @@ css =
             [ backgroundColor primary1
             , descendants
                 [ Css.Elements.ul
-                    [ descendants
+                    [ borderBottom3 (Css.px 2) solid primary3
+                    , descendants
                         [ Css.Elements.li
                             [ children
                                 [ Css.Elements.a
@@ -88,6 +91,7 @@ css =
         , (.) List
             [ margin (Css.em 0)
             , padding (Css.em 0)
+            , property "list-style" "none"
             , descendants
                 [ Css.Elements.li
                     [ display inlineBlock
@@ -100,5 +104,10 @@ css =
                         ]
                     ]
                 ]
+            ]
+        , (.) Icon
+            [ width (Css.em 2)
+            , height (Css.em 2)
+            , verticalAlign bottom
             ]
         ]
