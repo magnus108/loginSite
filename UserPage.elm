@@ -1,12 +1,13 @@
 module UserPage exposing (..)
 
 import Pages
-import Html exposing (Html, div, text, h3, ul, li, span)
+import Html exposing (Html, p, div, text, h3, ul, li, span)
 import Json.Decode as JsonD exposing ((:=))
 import Json.Encode as JsonE
 import Http
 import Task
 
+import MainCss
 
 type alias Model =
     { userId : Maybe String
@@ -74,18 +75,21 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ h3 [] [ text model.message ]
-        , ul [] (List.map personView model.data.people)
-        ]
+    let
 
+        { class } =
+            MainCss.navbarNamespace
 
-personView : Person -> Html Msg
-personView person =
-    li []
-        [ text person.firstname
-        , span [] [ Pages.linkTo (Pages.UserUpdatePage) [] [ text "update" ] ]
-        ]
+        personView person =
+            li []
+                [ p [] [ text person.firstname]
+                , p  [] [ Pages.linkTo (Pages.UserUpdatePage) [class [MainCss.Link]] [ text "update" ] ]
+                ]
+    in
+        div []
+            [ h3 [class [MainCss.Headline]] [ text model.message ]
+            , ul [class [MainCss.List]] (List.map personView model.data.people)
+            ]
 
 
 mountCmd : Maybe String -> Cmd Msg

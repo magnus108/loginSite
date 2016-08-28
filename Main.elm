@@ -259,15 +259,13 @@ view model =
                                 [ (Pages.UserPage, "UserPage")
                                 , (Pages.HomePage, "HomePage")
                                 , (Pages.LogoutPage, "LogoutPage")
-                                , (Pages.LoginPage, "LoginPage should not go here")
-                                , (Pages.NotFoundPage, "notfoundpage should not go here")
                                 ]
                     in
                         nav [ id MainCss.Navbar ] [ ul [ class [MainCss.List] ] links ]
         body =
             div [ class [MainCss.Content] ] [ viewPage model ]
     in
-        div [] [
+        div [class [MainCss.Main]] [
             --begone filth
             node "style" [type' "text/css" ] [ text compiled.css ]
             , head, body ]

@@ -14,6 +14,12 @@ type CssClasses
     | List
     | Headline
     | Icon
+    | Flex
+    | Link
+    | Column
+    | Main
+    | Main2
+    | Card
 
 
 navbarNamespace : Html.CssHelpers.Namespace String class id msg
@@ -23,10 +29,10 @@ navbarNamespace =
 
 --colors
 whiteColor = rgba 255 255 255
+blackColor = rgba 0 0 0
 
 primary1 = rgba 0 150 136 1
 primary2 = rgba 38 166 154 1
-primary3 = rgba 0 69 62 1
 
 warning1 = rgba 254 86 86 1
 
@@ -39,9 +45,9 @@ css =
             [ backgroundColor primary1
             , descendants
                 [ Css.Elements.ul
-                    [ borderBottom3 (Css.px 2) solid primary3
+                    [ displayFlex
                     , descendants
-                        [ Css.Elements.li
+                         [ Css.Elements.li
                             [ children
                                 [ Css.Elements.a
                                     [ color (whiteColor 0.6)
@@ -79,7 +85,6 @@ css =
         , (.) Content
             [ paddingLeft (Css.pct 8)
             , paddingRight (Css.pct 8)
-            , margin auto
             , property "font-family" "'Roboto','Helvetica','Arial',sans-serif"
             ]
         , (.) Headline
@@ -92,22 +97,60 @@ css =
             [ margin (Css.em 0)
             , padding (Css.em 0)
             , property "list-style" "none"
-            , descendants
-                [ Css.Elements.li
-                    [ display inlineBlock
-                    , descendants
-                        [ Css.Elements.span
-                            [ property "display" "inline-block"
-                            , property "vertical-align" "middle"
-                            , marginRight (Css.em 2)
-                            ]
-                        ]
-                    ]
-                ]
             ]
         , (.) Icon
             [ width (Css.em 2)
             , height (Css.em 2)
-            , verticalAlign bottom
+            , verticalAlign middle
+            , display inlineBlock
+            , marginRight (Css.em 2)
+            ]
+        , (.) Flex
+            [ displayFlex
+            ]
+            -- this and Flex should have some shared attributes..
+        , (.) Main
+            [ flexFlow2 column wrap
+            , displayFlex
+            ]
+        , (.) Link
+            [ textDecoration none
+            , textTransform uppercase
+            ]
+        , (.) Column
+            [ flexDirection column
+            ]
+            --shittymain again
+        , (.) Main2
+            [ flexFlow2 row wrap
+            ]
+        , (.) Card
+            [ property "box-shadow" "0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12)"
+            , displayFlex
+            , flexDirection column
+            , margin4 (Css.em 0) (Css.em 1) (Css.em 1) (Css.em 0)
+            , descendants
+                [ Css.Elements.header
+                    [ padding (Css.px 16)
+                    , fontSize (Css.em 1.8)
+                    ]
+                , Css.Elements.footer
+                    [ displayFlex
+                    , padding (Css.em 0.4)
+                    , children
+                        [ Css.Elements.a
+                            [ color warning1
+                            , flex (Css.int 1)
+                            , textAlign center
+                            , fontSize (Css.px 14)
+                            , padding (Css.px 16)
+                            , hover
+                                [ borderRadius (Css.px 2)
+                                , backgroundColor (blackColor 0.05)
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
             ]
         ]

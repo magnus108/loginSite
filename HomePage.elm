@@ -2,12 +2,14 @@ module HomePage exposing (..)
 
 import Http
 import Pages
-import Html exposing (Html, div, text, h3, ul, li, span)
+import Html exposing (Html, img, div, header, footer, text, h3, ul, li, span)
+import Html.Attributes exposing (..)
 import Json.Decode as JsonD exposing ((:=))
 import Json.Encode as JsonE
 import Http
 import Task
 
+import MainCss
 
 type alias Model =
     { userId : Maybe String
@@ -80,25 +82,25 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
+    let
+        { class } =
+            MainCss.navbarNamespace
+
+        personView person =
+            li []
+                [ ul [ class [MainCss.Main2, MainCss.List, MainCss.Flex]] (List.map travelView person.travels)
+                ]
+
+        travelView travel =
+            li [ class [MainCss.Card ]]
+                [ img [src "http://cdn.buynowsignal.com/wp-content/uploads/sites/19/1-best-beach-umbrella-300x300.jpg"] []
+                , header [] [ text travel.destination ]
+                , footer [] [ Pages.linkTo (Pages.TravelPage travel.id) [class [MainCss.Link]] [ text "More information"]]
+                ]
+    in
     div []
-        [ h3 [] [ text model.message ]
-        , ul [] (List.map personView model.data.people)
-        ]
-
-
-personView : Person -> Html Msg
-personView person =
-    li []
-        [ ul [] (List.map travelView person.travels)
-        ]
-
-
-travelView : Travel -> Html Msg
-travelView travel =
-    li []
-        [ span [] [ text (toString travel.id) ]
-        , text travel.destination
-        , Pages.linkTo (Pages.TravelPage travel.id) [] [ text "More information" ]
+        [ h3 [class [MainCss.Headline]] [ text model.message ]
+        , ul [class [MainCss.List]] (List.map personView model.data.people)
         ]
 
 

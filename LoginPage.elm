@@ -32,7 +32,7 @@ type alias Person =
 
 emptyPerson : Person
 emptyPerson =
-    { email = "Abigale18@gmail.com" }
+    { email = "Silas52@gmail.com" }
 
 emptyData : Data
 emptyData =

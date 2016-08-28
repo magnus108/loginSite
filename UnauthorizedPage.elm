@@ -1,7 +1,7 @@
 module UnauthorizedPage exposing (..)
 
 import Pages
-import Html exposing (Html, Attribute, div, text, form, input, h3, ul, li)
+import Html exposing (Html, Attribute, div, text, form, input, h3, ul, li, p)
 import Html.Attributes exposing (type', placeholder, value)
 import Html.Events exposing (onInput, onSubmit)
 import Json.Decode as JsonD exposing ((:=))
@@ -9,6 +9,7 @@ import Json.Encode as JsonE
 import Http
 import Task
 
+import MainCss
 
 type alias Model =
     { title : String
@@ -21,7 +22,7 @@ emptyModel : Model
 emptyModel =
     { title = "Unauthorized"
     , text = "You need to login before you can go to this location"
-    , linkText = "Go to loginpage"
+    , linkText = "Loginpage"
     }
 
 
@@ -45,13 +46,16 @@ update msg model =
 view : Model -> Html Msg
 view model =
     let
+        { class } =
+            MainCss.navbarNamespace
+
         head =
             h3 [] [ text model.title ]
 
         body =
             div []
-                [ text model.text
-                , Pages.linkTo (Pages.LoginPage) [] [ text model.linkText ]
+                [ p [] [ text model.text ]
+                , p [] [ Pages.linkTo (Pages.LoginPage) [ class [MainCss.Link] ] [ text model.linkText ] ]
                 ]
     in
         div [] [ head, body ]
