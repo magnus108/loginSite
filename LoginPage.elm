@@ -9,6 +9,7 @@ import Json.Encode as JsonE
 import Http
 import Task
 
+import MainCss
 
 type alias Model =
     { data : Data
@@ -32,7 +33,7 @@ type alias Person =
 
 emptyPerson : Person
 emptyPerson =
-    { email = "Silas52@gmail.com" }
+    { email = "" }
 
 emptyData : Data
 emptyData =
@@ -111,31 +112,35 @@ updateHelp email str person =
 view : Model -> Html Msg
 view model =
     let
+        { class } =
+            MainCss.navbarNamespace
+
         head =
-            h3 [] [ text model.message ]
+            h3 [class [MainCss.Headline]] [ text model.message ]
 
         body =
             div []
-                [ ul [] (List.map loginFormView model.data.people)
+                [ ul [class[MainCss.List]] (List.map loginFormView model.data.people)
                 ]
+
+        loginFormView person =
+            li []
+                [ form [class [MainCss.Form], onSubmit (Submit person) ]
+                    [ input [ type' "text"
+                        , placeholder "email"
+                        , onInput (Email person.email)
+                        , value person.email
+                        , class [MainCss.Input]
+                        ] []
+                    , input [ type' "submit"
+                        , value "Login"
+                        , class [MainCss.Submit]
+                        ] []
+                    ]
+                ]
+
     in
         div [] [ head, body ]
-
-
-loginFormView : Person -> Html Msg
-loginFormView person =
-    li []
-        [ form [ onSubmit (Submit person) ]
-            [ input [ type' "text"
-                , placeholder "email"
-                , onInput (Email person.email)
-                , value person.email
-                ] []
-            , input [ type' "submit"
-                , value "Login"
-                ] []
-            ]
-        ]
 
 
 baseUrl : String

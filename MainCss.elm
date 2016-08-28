@@ -20,6 +20,9 @@ type CssClasses
     | Main
     | Main2
     | Card
+    | Input
+    | Form
+    | Submit
 
 
 navbarNamespace : Html.CssHelpers.Namespace String class id msg
@@ -123,6 +126,35 @@ css =
             --shittymain again
         , (.) Main2
             [ flexFlow2 row wrap
+            ]
+        , (.) Form
+            [ displayFlex
+            , flexDirection column
+            , descendants
+                [ (.) Input
+                    [ borderStyle Css.none
+                    , padding2 (Css.px 4) (Css.px 0)
+                    , margin2 (Css.em 1) (Css.px 0)
+                    , borderBottom3 (Css.px 1) solid (blackColor 0.12)
+                    , property "outline" "none"
+                    , focus
+                        [ borderBottom3 (Css.px 1) solid warning1
+                        ]
+                    ]
+                , (.) Submit
+                    [ padding2 (Css.px 16) (Css.em 1)
+                    , margin2 (Css.em 1) (Css.em 0)
+                    , textTransform uppercase
+                    , fontSize (Css.px 14)
+                    , borderStyle Css.none
+                    , backgroundColor (whiteColor 1)
+                    , borderRadius (Css.px 3)
+                    , property "outline" "none"
+                    , hover
+                        [ backgroundColor (blackColor 0.05)
+                        ]
+                    ]
+                ]
             ]
         , (.) Card
             [ property "box-shadow" "0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12)"

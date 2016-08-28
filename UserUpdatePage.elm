@@ -9,6 +9,7 @@ import Json.Encode as JsonE
 import Http
 import Task
 
+import MainCss
 
 type alias UpdatePeople =
     { updatePeople : People
@@ -131,44 +132,47 @@ updateHelp firstname str person =
 view : Model -> Html Msg
 view model =
     let
+        { class } =
+            MainCss.navbarNamespace
+
         head =
-            h3 [] [ text model.message ]
+            h3 [class [MainCss.Headline]] [ text model.message ]
 
         body =
             case model.data of
                 Query data ->
                     div []
-                        [ ul [] (List.map personFormView data.people)
+                        [ ul [class [MainCss.List]] (List.map personFormView data.people)
                         ]
                 Mutation data ->
                     div []
-                        [ ul [] (List.map personUpdateView data.updatePeople.people)
+                        [ ul [class [MainCss.List]] (List.map personUpdateView data.updatePeople.people)
                         ]
+
+        personFormView person =
+            li []
+                [ form [ onSubmit (Submit person), class [MainCss.Form] ]
+                    [ input [ type' "text"
+                        , placeholder "firstname"
+                        , onInput (Input person.firstname)
+                        , value person.firstname
+                        , class [MainCss.Input]
+                        ] []
+                    , input [ type' "submit"
+                        , value "Update"
+                        , class [MainCss.Submit]
+                        ] []
+                    ]
+                ]
+
+        personUpdateView person =
+            li []
+                [ text person.firstname
+                ]
+
     in
         div [] [ head, body ]
 
-
-personUpdateView : Person -> Html Msg
-personUpdateView person =
-    li []
-        [ text person.firstname
-        ]
-
-
-personFormView : Person -> Html Msg
-personFormView person =
-    li []
-        [ form [ onSubmit (Submit person) ]
-            [ input [ type' "text"
-                , placeholder "firstname"
-                , onInput (Input person.firstname)
-                , value person.firstname
-                ] []
-            , input [ type' "submit"
-                , value "Update"
-                ] []
-            ]
-        ]
 
 
 mountCmd : Maybe String -> Cmd Msg
