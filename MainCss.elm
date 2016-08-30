@@ -55,6 +55,7 @@ css =
                                 [ Css.Elements.a
                                     [ color (whiteColor 0.6)
                                     , display inlineBlock
+                                    , property "outline" "0"
                                     , textDecoration none
                                     , textTransform uppercase
                                     , property "font-family" "'Helvetica','Arial',sans-serif"
@@ -136,7 +137,7 @@ css =
                     , padding2 (Css.px 4) (Css.px 0)
                     , margin2 (Css.em 1) (Css.px 0)
                     , borderBottom3 (Css.px 1) solid (blackColor 0.12)
-                    , property "outline" "none"
+                    , property "outline" "0"
                     , focus
                         [ borderBottom3 (Css.px 1) solid warning1
                         ]
@@ -149,7 +150,7 @@ css =
                     , borderStyle Css.none
                     , backgroundColor (whiteColor 1)
                     , borderRadius (Css.px 3)
-                    , property "outline" "none"
+                    , property "outline" "0"
                     , hover
                         [ backgroundColor (blackColor 0.05)
                         ]
@@ -173,6 +174,7 @@ css =
                         [ Css.Elements.a
                             [ color warning1
                             , flex (Css.int 1)
+                            , property "outline" "0"
                             , textAlign center
                             , fontSize (Css.px 14)
                             , padding (Css.px 16)
