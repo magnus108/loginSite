@@ -2,7 +2,7 @@ module HomePage exposing (..)
 
 import Http
 import Pages
-import Html exposing (Html, img, div, header, footer, text, h3, ul, li, span)
+import Html exposing (Html, p, img, div, header, footer, text, h3, ul, li, span)
 import Html.Attributes exposing (..)
 import Json.Decode as JsonD exposing ((:=))
 import Json.Encode as JsonE
@@ -94,8 +94,10 @@ view model =
         travelView travel =
             li [ class [MainCss.Card ]]
                 [ img [src "http://cdn.buynowsignal.com/wp-content/uploads/sites/19/1-best-beach-umbrella-300x300.jpg"] []
-                , header [] [ text travel.destination ]
-                , footer [] [ Pages.linkTo (Pages.TravelPage travel.id) [class [MainCss.Link]] [ text "More information"]]
+                , div [class [MainCss.CardContent]]
+                    [ header [] [ p [] [ text travel.destination] ]
+                    , footer [] [ Pages.linkTo (Pages.TravelPage travel.id) [class [MainCss.Link]] [ text "More information"]]
+                    ]
                 ]
     in
     div []

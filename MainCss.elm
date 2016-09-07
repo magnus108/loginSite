@@ -1,4 +1,3 @@
-
 module MainCss exposing (..)
 
 import Css exposing (..)
@@ -23,7 +22,9 @@ type CssClasses
     | Input
     | Form
     | Submit
-
+    | Body
+    | CardContent
+    | IconList
 
 navbarNamespace : Html.CssHelpers.Namespace String class id msg
 navbarNamespace =
@@ -101,6 +102,13 @@ css =
             [ margin (Css.em 0)
             , padding (Css.em 0)
             , property "list-style" "none"
+            , children
+                [ (.) IconList
+                    [ displayFlex
+                    , property "align-items" "center"
+                    , color (blackColor 0.60)
+                    ]
+                ]
             ]
         , (.) Icon
             [ width (Css.em 2)
@@ -116,6 +124,17 @@ css =
         , (.) Main
             [ flexFlow2 column wrap
             , displayFlex
+            , fontSize (Css.px 16)
+            ]
+        , (.) Body
+            [ color (blackColor 1)
+            , property "font-family" "'Roboto','Helvetica','Arial',sans-serif"
+            , fontSize (Css.pct 62.5)
+            , descendants
+                [ Css.Elements.p
+                    [ fontSize (Css.em 1.4)
+                    ]
+                ]
             ]
         , (.) Link
             [ textDecoration none
@@ -138,6 +157,7 @@ css =
                     , margin2 (Css.em 1) (Css.px 0)
                     , borderBottom3 (Css.px 1) solid (blackColor 0.12)
                     , property "outline" "0"
+                    , property "transition" "border-bottom 0.4s"
                     , focus
                         [ borderBottom3 (Css.px 1) solid warning1
                         ]
@@ -160,28 +180,37 @@ css =
         , (.) Card
             [ property "box-shadow" "0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12)"
             , displayFlex
-            , flexDirection column
+            , flexFlow2 column wrap
+            , flex2 (Css.int 0) (Css.int 1)
             , margin4 (Css.em 0) (Css.em 1) (Css.em 1) (Css.em 0)
+            , property "word-break" "break-word"
             , descendants
-                [ Css.Elements.header
-                    [ padding (Css.px 16)
-                    , fontSize (Css.em 1.8)
-                    ]
-                , Css.Elements.footer
-                    [ displayFlex
-                    , padding (Css.em 0.4)
+                [ (.) CardContent
+                    [ padding (Css.em 1)
+                    , flex (Css.int 1)
+                    , displayFlex
+                    , flexFlow1 column
                     , children
-                        [ Css.Elements.a
-                            [ color warning1
-                            , flex (Css.int 1)
-                            , property "outline" "0"
-                            , textAlign center
-                            , fontSize (Css.px 14)
-                            , padding (Css.px 16)
-                            , hover
-                                [ borderRadius (Css.px 2)
-                                , backgroundColor (blackColor 0.05)
+                        [ Css.Elements.footer
+                            [ displayFlex
+                            , children
+                                [ Css.Elements.a
+                                    [ color warning1
+                                    , flex (Css.int 1)
+                                    , property "outline" "0"
+                                    , textAlign center
+                                    , fontSize (Css.px 14)
+                                    , padding (Css.px 16)
+                                    , hover
+                                        [ borderRadius (Css.px 2)
+                                        , backgroundColor (blackColor 0.05)
+                                        ]
+                                    ]
                                 ]
+                            ]
+                        , Css.Elements.header
+                            [ fontSize (Css.em 2)
+                            , flex (Css.int 1)
                             ]
                         ]
                     ]

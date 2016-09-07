@@ -1,7 +1,7 @@
 module UserUpdatePage exposing (..)
 
 import Pages
-import Html exposing (Html, div, text, form, input, h3, ul, li, span)
+import Html exposing (Html, p, div, text, form, input, h3, ul, li, span)
 import Html.Attributes exposing (type', placeholder, value)
 import Html.Events exposing (onInput, onSubmit)
 import Json.Decode as JsonD exposing ((:=))
@@ -167,7 +167,7 @@ view model =
 
         personUpdateView person =
             li []
-                [ text person.firstname
+                [ p [] [ text person.firstname ]
                 ]
 
     in

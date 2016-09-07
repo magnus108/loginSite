@@ -267,8 +267,9 @@ view model =
     in
         div [class [MainCss.Main]] [
             --begone filth
+            div [ class [MainCss.Body]] [
             node "style" [type' "text/css" ] [ text compiled.css ]
-            , head, body ]
+            , head, body ]]
 
 
 linkifier : Pages.Page -> List ( Pages.Page, String ) -> List (Html Msg)
