@@ -147,6 +147,7 @@ update msg model =
                     ! [ Cmd.map NotFoundPageMsg subCmd ]
 
 
+
 urlUpdate : Result String Pages.Page -> Model -> ( Model, Cmd Msg )
 urlUpdate result model =
     case result of
@@ -157,64 +158,81 @@ urlUpdate result model =
                 ! [ Pages.modify Pages.NotFoundPage ]
 
         Ok page ->
-            let
-                userId =
-                    List.foldl (\person acc -> if person.email /= "" then Just person.email else Nothing ) Nothing model.loginPageModel.data.people
-            in
-                case page of
-                    Pages.LoginPage ->
-                        case userId of
-                            Nothing ->
-                                { model
-                                    | currentPage = page
-                                }
-                                    ! []
-                            Just uid ->
-                                { model
-                                    | currentPage = page
-                                }
-                                    ! [Pages.navigate Pages.HomePage]
+            case page of
+                Pages.LoginPage ->
+                    case model.loginPageModel.loginResult of
+                        Nothing ->
+                            model ! []
+                        Just loginResult ->
+                        -- børmåske have info om fail to change to
+                            { model
+                                | currentPage = page
+                            } ! [Pages.navigate Pages.HomePage]
 
-                    Pages.LogoutPage ->
-                        { model
-                            | currentPage = page
-                            , loginPageModel = LoginPage.init
-                        }
-                            ! []
+                Pages.LogoutPage ->
+                    { model
+                        | currentPage = page
+                        , loginPageModel = LoginPage.init
+                    }
+                        ! []
 
-                    Pages.HomePage ->
-                        { model
-                            | currentPage = page
-                        }
-                            ! [ Cmd.map HomePageMsg (HomePage.mountCmd userId) ]
+                Pages.HomePage ->
+                    case model.loginPageModel.loginResult of
+                        -- børmåske have info om fail to change to
+                        Nothing ->
+                            model ! []
+                        Just loginResult ->
+                            { model
+                                | currentPage = page
+                            }
+                                ! [ Cmd.map HomePageMsg
+                                    (HomePage.mountCmd loginResult) ]
 
-                    Pages.TravelPage id ->
-                        { model
-                            | currentPage = page
-                        }
-                            ! [ Cmd.map TravelPageMsg (TravelPage.mountCmd userId id)]
+                Pages.TravelPage id ->
+                    case model.loginPageModel.loginResult of
+                        -- børmåske have info om fail to change to
+                        Nothing ->
+                            model ! []
+                        Just loginResult ->
+                            { model
+                                | currentPage = page
+                            }
+                                ! [ Cmd.map TravelPageMsg
+                                    (TravelPage.mountCmd loginResult id) ]
 
-                    Pages.UserPage ->
-                        { model
-                            | currentPage = page
-                        }
-                            ! [ Cmd.map UserPageMsg (UserPage.mountCmd userId ) ]
+                Pages.UserPage ->
+                    case model.loginPageModel.loginResult of
+                        -- børmåske have info om fail to change to
+                        Nothing ->
+                            model ! []
+                        Just loginResult ->
+                            { model
+                                | currentPage = page
+                            }
+                                ! [ Cmd.map UserPageMsg
+                                    (UserPage.mountCmd loginResult) ]
 
-                    Pages.UserUpdatePage ->
-                        { model
-                            | currentPage = page
-                        }
-                            ! [ Cmd.map UserUpdatePageMsg (UserUpdatePage.mountCmd userId) ]
+                Pages.UserUpdatePage ->
+                    case model.loginPageModel.loginResult of
+                        -- børmåske have info om fail to change to
+                        Nothing ->
+                            model ! []
+                        Just loginResult ->
+                            { model
+                                | currentPage = page
+                            }
+                                ! [ Cmd.map UserUpdatePageMsg
+                                    (UserUpdatePage.mountCmd loginResult) ]
 
-                    Pages.UnauthorizedPage ->
-                        { model
-                            | currentPage = page
-                        }
-                            ! []
+                Pages.UnauthorizedPage ->
+                    { model
+                        | currentPage = page
+                    }
+                        ! []
 
-                    Pages.NotFoundPage ->
-                        { model
-                            | currentPage = page
+                Pages.NotFoundPage ->
+                    { model
+                        | currentPage = page
                         }
                             ! []
 

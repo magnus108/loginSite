@@ -41,6 +41,20 @@ type alias Travel =
     }
 
 
+type alias LoginResult =
+    --æregeligt den skal hede data
+    { data : LoginData
+    }
+
+type alias LoginData =
+    { loginPerson : Uuid
+    }
+
+type alias Uuid =
+    { email : String
+    }
+
+
 emptyData : Data
 emptyData =
     { people = [] }
@@ -118,14 +132,9 @@ view model =
             , ul [class [MainCss.List]] (List.map personView model.data.people)
             ]
 
-mountCmd : Maybe String -> Int -> Cmd Msg
-mountCmd userId id =
-    case userId of
-        Nothing ->
-            Pages.navigate Pages.UnauthorizedPage
-        Just email ->
-            get email id Error Get
-
+mountCmd : LoginResult -> Int -> Cmd Msg
+mountCmd loginResult id =
+    get loginResult.data.loginPerson.email id Error Get
 
 baseUrl : String
 baseUrl =

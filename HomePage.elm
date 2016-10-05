@@ -38,6 +38,18 @@ type alias Travel =
     , destination : String
     }
 
+type alias LoginResult =
+    --æregeligt den skal hede data
+    { data : LoginData
+    }
+
+type alias LoginData =
+    { loginPerson : Uuid
+    }
+
+type alias Uuid =
+    { email : String
+    }
 
 emptyData : Data
 emptyData =
@@ -168,10 +180,6 @@ encode =
     JsonE.encode 0
 
 
-mountCmd : Maybe String -> Cmd Msg
-mountCmd userId =
-    case userId of
-        Nothing ->
-            Pages.navigate Pages.UnauthorizedPage
-        Just email ->
-            get email Error Get
+mountCmd : LoginResult -> Cmd Msg
+mountCmd loginResult =
+    get loginResult.data.loginPerson.email Error Get

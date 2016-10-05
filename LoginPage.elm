@@ -12,37 +12,39 @@ import Task
 import MainCss
 
 type alias Model =
-    { data : Data
+    { loginResult : Maybe LoginResult
+    , loginForm : LoginForm
     , message : String
     }
 
-
-type alias Result =
-    { data : Data
+type alias LoginResult =
+    --ærgeligt den skal hede data
+    { data : LoginData
     }
 
-
-type alias Data =
-    { people : List Person
+type alias LoginData =
+    { loginPerson : Uuid
     }
 
-
-type alias Person =
+type alias Uuid =
     { email : String
     }
 
-emptyPerson : Person
-emptyPerson =
-    { email = "Abigale18@gmail.com" }
+type alias LoginForm =
+    { email : String
+    , groupId : String
+    }
 
-emptyData : Data
-emptyData =
-    { people = [emptyPerson] }
-
+emptyLoginForm : LoginForm
+emptyLoginForm =
+    { email = ""
+    , groupId = ""
+    }
 
 emptyModel : Model
 emptyModel =
-    { data = emptyData
+    { loginResult = Nothing
+    , loginForm = emptyLoginForm
     , message = "Login"
     }
 
@@ -50,13 +52,12 @@ init : Model
 init =
     emptyModel
 
-
 type Msg
     = NoOp
     | Error String
-    | Get Result
-    | Submit Person
-    | Email String String
+    | Get LoginResult
+    | Submit LoginForm
+    | Email String
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -65,49 +66,28 @@ update msg model =
             model
                 ! []
 
-        Get result ->
-            let
-                data =
-                    if List.length result.data.people > 0 then
-                        result.data
-                    else
-                        emptyData
-            in
-                { model
-                    | message = "This is your account"
-                    , data = data
-                } ! [ Pages.navigate Pages.HomePage ]
+        Get loginResult ->
+            { model
+                | message = "This is your account"
+                , loginResult = Just loginResult
+            } ! [ Pages.navigate Pages.HomePage ]
 
         Error err ->
             { model | message = "Oops! An error occurred: " ++ err }
                 ! []
 
-        Email email str ->
+        Email email ->
             let
-                data =
-                    model.data
-
-                (people, cmds) =
-                    List.unzip
-                        ( List.map (updateHelp email str) data.people )
-
+                loginForm =
+                    model.loginForm
             in
-                {model | data = { data | people = people}} ! cmds
+                {model | loginForm = { loginForm | email = email }} ! []
 
 
-        Submit person ->
+        Submit loginForm ->
             { model | message = "Initiating update" }
-                ! [post person Error Get]
+                ! [post loginForm Error Get]
 
-
-updateHelp : String -> String -> Person -> (Person, Cmd Msg)
-updateHelp email str person =
-    if person.email /= email then
-        person
-            ! []
-    else
-        { person | email = str }
-            ! []
 
 view : Model -> Html Msg
 view model =
@@ -119,24 +99,20 @@ view model =
             h3 [class [MainCss.Headline]] [ text model.message ]
 
         body =
-            div []
-                [ ul [class[MainCss.List]] (List.map loginFormView model.data.people)
-                ]
+            div [] [loginFormView model.loginForm]
 
-        loginFormView person =
-            li []
-                [ form [class [MainCss.Form], onSubmit (Submit person) ]
-                    [ input [ type' "text"
-                        , placeholder "email"
-                        , onInput (Email person.email)
-                        , value person.email
-                        , class [MainCss.Input]
-                        ] []
-                    , input [ type' "submit"
-                        , value "Login"
-                        , class [MainCss.Submit]
-                        ] []
-                    ]
+        loginFormView loginForm =
+            form [class [MainCss.Form], onSubmit (Submit loginForm) ]
+                [ input [ type' "text"
+                    , placeholder "email"
+                    , onInput Email
+                    , value loginForm.email
+                    , class [MainCss.Input]
+                    ] []
+                , input [ type' "submit"
+                    , value "Login"
+                    , class [MainCss.Submit]
+                    ] []
                 ]
 
     in
@@ -148,47 +124,41 @@ baseUrl =
     "http://localhost:3000/graphql?raw"
 
 
-post : Person -> (String -> a) -> (Result -> a) -> Cmd a
-post person errorMsg msg =
+post : LoginForm -> (String -> a) -> (LoginResult -> a) -> Cmd a
+post loginForm errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl
-        , body = Http.string (encode (query person.email))
+        , body = Http.string (encode (query loginForm.email))
         , headers = [ ( "Content-Type", "application/json" ) ]
         }
-        |> Http.fromJson resultDecoder
+        |> Http.fromJson loginResultDecoder
         |> Task.mapError toString
         |> Task.perform errorMsg msg
 
 
-resultDecoder : JsonD.Decoder Result
-resultDecoder =
-    JsonD.object1 Result
-        ("data" := dataDecoder)
+loginResultDecoder : JsonD.Decoder LoginResult
+loginResultDecoder =
+    JsonD.object1 LoginResult
+        ("data" := loginDataDecoder)
 
 
-dataDecoder : JsonD.Decoder Data
-dataDecoder =
-    JsonD.object1 Data
-        ("people" := peopleDecoder)
+loginDataDecoder : JsonD.Decoder LoginData
+loginDataDecoder =
+    JsonD.object1 LoginData
+        ("loginPerson" := uuidDecoder)
 
 
-peopleDecoder : JsonD.Decoder (List Person)
-peopleDecoder =
-    JsonD.list personDecoder
-
-
-personDecoder : JsonD.Decoder Person
-personDecoder =
-    JsonD.object1 Person
-        ("email" := JsonD.string)
+uuidDecoder : JsonD.Decoder Uuid
+uuidDecoder =
+    JsonD.object1 Uuid
+        ("uuid" := JsonD.string)
 
 
 query : String -> JsonE.Value
 query userId =
     JsonE.object
-        [ ("query", JsonE.string ("{people(where:{email:\"" ++ userId ++ "\"})
-            {email}}"))
+        [ ("query", JsonE.string ("mutation{loginPerson(email:\"" ++ userId ++ "\",groupId:1){uuid}}"))
         ]
 
 

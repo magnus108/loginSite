@@ -27,7 +27,7 @@ type Data
 
 
 type alias Model =
-    { userId : Maybe String
+    { userId : String
     , data : Data
     , message : String
     }
@@ -43,6 +43,21 @@ type alias Person =
     }
 
 
+type alias LoginResult =
+    -- ærgeligt den skal hede data
+    -- ærgeligt den skal hede data
+    { data : LoginData
+    }
+
+type alias LoginData =
+    { loginPerson : Uuid
+    }
+
+type alias Uuid =
+    { email : String
+    }
+
+
 emptyData : Data
 emptyData =
     Query { people = [] }
@@ -50,7 +65,7 @@ emptyData =
 
 emptyModel : Model
 emptyModel =
-    { userId = Nothing
+    { userId = ""
     , data = emptyData
     , message = "Initiating"
     }
@@ -67,7 +82,7 @@ type Msg
     | Get Result
     | Submit Person
     | Input String String
-    | SetUser (Maybe String)
+    | SetUser String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -108,17 +123,14 @@ update msg model =
                 Mutation data ->
                         model ! []
 
-        Submit person ->
-            case model.userId of
-                Nothing ->
-                    { model | message = "Missing userId" }
-                        ! []
-                Just userId ->
-                    { model | message = "Initiating update" }
-                        ! [post userId person Error Get]
-
         SetUser userId ->
             { model | userId = userId } ! []
+
+        Submit person ->
+            { model | message = "Initiating update" }
+                ! [post model.userId person Error Get]
+
+
 
 updateHelp : String -> String -> Person -> (Person, Cmd Msg)
 updateHelp firstname str person =
@@ -175,16 +187,16 @@ view model =
 
 
 
-mountCmd : Maybe String -> Cmd Msg
-mountCmd userId =
-    case userId of
-        Nothing ->
-            Pages.navigate Pages.UnauthorizedPage
-        Just email ->
-            Cmd.batch
-                [ Task.perform identity identity (Task.succeed (SetUser userId))
-                , get email Error Get
-                ]
+mountCmd : LoginResult -> Cmd Msg
+mountCmd loginResult =
+    let
+        email = loginResult.data.loginPerson.email
+    in
+        Cmd.batch
+            [ Task.perform identity identity (Task.succeed (SetUser email))
+            , get email Error Get
+            ]
+
 
 
 baseUrl : String

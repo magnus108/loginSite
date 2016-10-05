@@ -30,6 +30,18 @@ type alias Person =
     { firstname : String
     }
 
+type alias LoginResult =
+    { data : LoginData
+    --ærgeligt den skal hede data
+    }
+
+type alias LoginData =
+    { loginPerson : Uuid
+    }
+
+type alias Uuid =
+    { email : String
+    }
 
 emptyData : Data
 emptyData =
@@ -92,14 +104,9 @@ view model =
             ]
 
 
-mountCmd : Maybe String -> Cmd Msg
-mountCmd userId =
-    case userId of
-        Nothing ->
-            Pages.navigate Pages.UnauthorizedPage
-        Just email ->
-            get email Error Get
-
+mountCmd : LoginResult -> Cmd Msg
+mountCmd loginResult =
+    get loginResult.data.loginPerson.email Error Get
 
 baseUrl : String
 baseUrl =
