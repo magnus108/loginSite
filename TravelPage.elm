@@ -14,24 +14,18 @@ import Svg.Attributes exposing (..)
 
 
 type alias Model =
-    { userId : Maybe String
-    , data : Data
+    { travel : Maybe Travel
     , message : String
     }
 
 
-type alias Result =
-    { data : Data
+type alias TravelPageResult =
+    { data : TravelPageData
     }
 
 
-type alias Data =
-    { people : List Person
-    }
-
-
-type alias Person =
-    { travels : List Travel
+type alias TravelPageData =
+    { travel : Travel
     }
 
 
@@ -55,15 +49,9 @@ type alias Uuid =
     }
 
 
-emptyData : Data
-emptyData =
-    { people = [] }
-
-
 emptyModel : Model
 emptyModel =
-    { userId = Nothing
-    , data = emptyData
+    { travel = Nothing
     , message = "Initiating"
     }
 
@@ -76,7 +64,7 @@ init =
 type Msg
     = NoOp
     | Error String
-    | Get Result
+    | Get TravelPageResult
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -89,7 +77,7 @@ update msg model =
         Get result ->
             { model
                 | message = "This is your travel"
-                , data = result.data
+                , travel = Just result.data.travel
             } ! []
 
         Error err ->
@@ -104,16 +92,13 @@ view model =
         { class } =
             MainCss.navbarNamespace
 
-        personView person =
-            div []
-                [ ul [ class [MainCss.List]] (List.map travelView person.travels)
-                ]
-
         travelView travel =
-            li [class [MainCss.IconList]]
-                [ span [class [MainCss.Icon]] [ icon travel.status ]
-                , p [class [MainCss.Flex]] [ Html.text travel.destination ]
-                ]
+            case travel of
+                Nothing -> div [] []
+                Just travel ->
+                    div [] [ span [class [MainCss.Icon]] [ icon travel.status ]
+                    , p [class [MainCss.Flex]] [ Html.text travel.destination ]
+                    ]
 
         icon status =
             case status of
@@ -129,19 +114,20 @@ view model =
     in
         div []
             [ h3 [class [MainCss.Headline]] [ Html.text model.message ]
-            , ul [class [MainCss.List]] (List.map personView model.data.people)
+            , travelView model.travel
             ]
 
 mountCmd : LoginResult -> Int -> Cmd Msg
 mountCmd loginResult id =
     get loginResult.data.loginPerson.email id Error Get
 
+
 baseUrl : String
 baseUrl =
     "http://localhost:3000/graphql?raw"
 
 
-get : String -> Int -> (String -> a) -> (Result -> a) -> Cmd a
+get : String -> Int -> (String -> a) -> (TravelPageResult -> a) -> Cmd a
 get userId id errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
@@ -150,32 +136,21 @@ get userId id errorMsg msg =
         , headers =
             [ ( "Content-Type", "application/json" ) ]
         }
-        |> Http.fromJson resultDecoder
+        |> Http.fromJson travelPageResultDecoder
         |> Task.mapError toString
         |> Task.perform errorMsg msg
 
 
-resultDecoder : JsonD.Decoder Result
-resultDecoder =
-    JsonD.object1 Result
-        ("data" := dataDecoder)
+travelPageResultDecoder : JsonD.Decoder TravelPageResult
+travelPageResultDecoder =
+    JsonD.object1 TravelPageResult
+        ("data" := travelPageDataDecoder)
 
 
-dataDecoder : JsonD.Decoder Data
-dataDecoder =
-    JsonD.object1 Data
-        ("people" := peopleDecoder)
-
-
-peopleDecoder : JsonD.Decoder (List Person)
-peopleDecoder =
-    JsonD.list personDecoder
-
-
-personDecoder : JsonD.Decoder Person
-personDecoder =
-    JsonD.object1 Person
-        ("travels" := JsonD.list travelDecoder)
+travelPageDataDecoder : JsonD.Decoder TravelPageData
+travelPageDataDecoder =
+    JsonD.object1 TravelPageData
+        ("travel" := travelDecoder)
 
 
 travelDecoder : JsonD.Decoder Travel
@@ -188,8 +163,10 @@ travelDecoder =
 query : String -> Int -> JsonE.Value
 query userId id =
     JsonE.object
-        [ ("query", JsonE.string ("{people(where:{email:\"" ++ userId ++ "\"})
-            {travels(where:{id:" ++ (toString id) ++ "}){status destination}}}"))
+        [ ("query",
+            JsonE.string ("query($uuid:String!,$travelId:Int!){travel(uuid:$uuid,travelId:$travelId){id destination status}}"))
+          , ("variables",
+            JsonE.string ("{\"uuid\":\"" ++ userId ++ "\", \"travelId\":" ++ ( toString id ) ++ "}"))
         ]
 
 

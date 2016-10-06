@@ -12,26 +12,28 @@ import Task
 import MainCss
 
 type alias Model =
-    { userId : Maybe String
-    , data : Data
-    , message : String
+    { message : String
+    , groups : List Group
     }
 
 
-type alias Result =
-    { data : Data
+type alias HomePageResult =
+    { data : HomePageData
     }
 
 
-type alias Data =
-    { people : List Person
+type alias HomePageData =
+    { person : Person
     }
 
 
 type alias Person =
-    { travels : List Travel
+    { groups : List Group
     }
 
+type alias Group =
+    { travels : List Travel
+    }
 
 type alias Travel =
     { id : Int
@@ -51,16 +53,11 @@ type alias Uuid =
     { email : String
     }
 
-emptyData : Data
-emptyData =
-    { people = [] }
-
 
 emptyModel : Model
 emptyModel =
-    { userId = Nothing
-    , data = emptyData
-    , message = "Initiating"
+    { message = "Initiating"
+    , groups = []
     }
 
 init : Model
@@ -70,7 +67,7 @@ init =
 
 type Msg
     = NoOp
-    | Get Result
+    | Get HomePageResult
     | Error String
 
 
@@ -84,7 +81,7 @@ update msg model =
         Get result ->
             { model
                 | message = "These are your travels"
-                , data = result.data
+                , groups = result.data.person.groups
             } ! []
 
         Error err ->
@@ -98,9 +95,9 @@ view model =
         { class } =
             MainCss.navbarNamespace
 
-        personView person =
+        groupView group =
             li []
-                [ ul [ class [MainCss.Main2, MainCss.List, MainCss.Flex]] (List.map travelView person.travels)
+                [ ul [ class [MainCss.Main2, MainCss.List, MainCss.Flex]] (List.map travelView group.travels)
                 ]
 
         travelView travel =
@@ -112,10 +109,10 @@ view model =
                     ]
                 ]
     in
-    div []
-        [ h3 [class [MainCss.Headline]] [ text model.message ]
-        , ul [class [MainCss.List]] (List.map personView model.data.people)
-        ]
+        div []
+            [ h3 [class [MainCss.Headline]] [ text model.message ]
+            , ul [class [MainCss.List]] (List.map groupView model.groups)
+            ]
 
 
 baseUrl : String
@@ -123,7 +120,7 @@ baseUrl =
     "http://localhost:3000/graphql?raw"
 
 
-get : String -> (String -> a) -> (Result -> a) -> Cmd a
+get : String -> (String -> a) -> (HomePageResult -> a) -> Cmd a
 get userId errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
@@ -132,31 +129,32 @@ get userId errorMsg msg =
         , headers =
             [ ( "Content-Type", "application/json" ) ]
         }
-        |> Http.fromJson resultDecoder
+        |> Http.fromJson homePageResultDecoder
         |> Task.mapError toString
         |> Task.perform errorMsg msg
 
 
-resultDecoder : JsonD.Decoder Result
-resultDecoder =
-    JsonD.object1 Result
-        ("data" := dataDecoder)
+homePageResultDecoder : JsonD.Decoder HomePageResult
+homePageResultDecoder =
+    JsonD.object1 HomePageResult
+        ("data" := homePageDataDecoder)
 
 
-dataDecoder : JsonD.Decoder Data
-dataDecoder =
-    JsonD.object1 Data
-        ("people" := peopleDecoder)
-
-
-peopleDecoder : JsonD.Decoder (List Person)
-peopleDecoder =
-    JsonD.list personDecoder
+homePageDataDecoder : JsonD.Decoder HomePageData
+homePageDataDecoder =
+    JsonD.object1 HomePageData
+        ("person" := personDecoder)
 
 
 personDecoder : JsonD.Decoder Person
 personDecoder =
     JsonD.object1 Person
+        ("groups" := JsonD.list groupDecoder)
+
+
+groupDecoder : JsonD.Decoder Group
+groupDecoder =
+    JsonD.object1 Group
         ("travels" := JsonD.list travelDecoder)
 
 
@@ -171,7 +169,9 @@ query : String -> JsonE.Value
 query userId =
     JsonE.object
         [ ("query",
-            JsonE.string ("{people(where:{email:\"" ++ userId ++ "\"}){travels{id destination}}}"))
+            JsonE.string ("query($uuid: String!){person(uuid:$uuid){groups(uuid:$uuid){travels(uuid:$uuid){id destination status}}}}"))
+          , ("variables",
+            JsonE.string ("{\"uuid\": \"" ++ userId ++ "\"}"))
         ]
 
 
