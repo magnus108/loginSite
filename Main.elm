@@ -162,12 +162,12 @@ urlUpdate result model =
                 Pages.LoginPage ->
                     case model.loginPageModel.loginResult of
                         Nothing ->
-                            model ! []
-                        Just loginResult ->
-                        -- børmåske have info om fail to change to
                             { model
                                 | currentPage = page
-                            } ! [Pages.navigate Pages.HomePage]
+                            } ! []
+                        Just loginResult ->
+                        -- børmåske have info om fail to change to
+                            model ! [Pages.navigate Pages.HomePage]
 
                 Pages.LogoutPage ->
                     { model

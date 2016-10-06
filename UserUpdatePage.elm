@@ -26,6 +26,7 @@ type alias Model =
     { person : Maybe Person
     , message : String
     , state: State
+    , uuid: String
     }
 
 type State
@@ -73,6 +74,7 @@ emptyModel =
     { person = Nothing
     , message = "Initiating"
     , state = Query
+    , uuid = ""
     }
 
 
@@ -88,6 +90,7 @@ type Msg
     | Post UserUpdatePageResult
     | Submit Person
     | Input String
+    | SetUuid String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -130,9 +133,10 @@ update msg model =
 
         Submit person ->
             { model | message = "Initiating update" }
-                ! [post person Error Post]
+                ! [post model.uuid person Error Post]
 
-
+        SetUuid uuid ->
+            { model | uuid = uuid } ! []
 
 view : Model -> Html Msg
 view model =
@@ -187,7 +191,13 @@ view model =
 
 mountCmd : LoginResult -> Cmd Msg
 mountCmd loginResult =
-    get loginResult.data.loginPerson.email Error Get
+    let
+        email = loginResult.data.loginPerson.email
+    in
+        Cmd.batch
+            [ Task.perform identity identity (Task.succeed (SetUuid email))
+            , get email Error Get
+            ]
 
 
 
@@ -210,12 +220,12 @@ get userId errorMsg msg =
         |> Task.perform errorMsg msg
 
 
-post : Person -> (String -> a) -> (UserUpdatePageResult -> a) -> Cmd a
-post person errorMsg msg =
+post : String -> Person -> (String -> a) -> (UserUpdatePageResult -> a) -> Cmd a
+post uuid person errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl
-        , body = Http.string (encode (mutation person.firstname))
+        , body = Http.string (encode (mutation person.firstname uuid))
         , headers = [ ( "Content-Type", "application/json" ) ]
         }
         |> Http.fromJson userUpdatePageResultDecoder
@@ -253,16 +263,13 @@ personDecoder =
         ("firstname" := JsonD.string)
 
 
-mutation : String -> JsonE.Value
-mutation firstname =
-    let
-        userId = "Dulce_Jenkins@hotmail.com"
-    in
+mutation : String -> String -> JsonE.Value
+mutation firstname uuid =
     JsonE.object
         [ ("query",
             JsonE.string ("mutation($uuid:String!,$personId:String!,$values:JSON!){updatePerson(values:$values,personId:$personId,uuid:$uuid){firstname}}"))
           , ("variables",
-            JsonE.string ("{\"uuid\":\"" ++ userId ++ "\",\"personId\":\"" ++ userId ++ "\",\"values\":{\"firstname\":\"" ++ firstname ++ "\"}}"))
+            JsonE.string ("{\"uuid\":\"" ++ uuid++ "\",\"personId\":\"" ++ uuid ++ "\",\"values\":{\"firstname\":\"" ++ firstname ++ "\"}}"))
         ]
 
 

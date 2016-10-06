@@ -58,6 +58,7 @@ type Msg
     | Get LoginResult
     | Submit LoginForm
     | Email String
+    | GroupId String
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -82,6 +83,13 @@ update msg model =
                     model.loginForm
             in
                 {model | loginForm = { loginForm | email = email }} ! []
+
+        GroupId groupId ->
+            let
+                loginForm =
+                    model.loginForm
+            in
+                {model | loginForm = { loginForm | groupId = groupId }} ! []
 
 
         Submit loginForm ->
@@ -109,6 +117,12 @@ view model =
                     , value loginForm.email
                     , class [MainCss.Input]
                     ] []
+                , input [ type' "text"
+                    , placeholder "groupId"
+                    , onInput GroupId
+                    , value loginForm.groupId
+                    , class [MainCss.Input]
+                    ] []
                 , input [ type' "submit"
                     , value "Login"
                     , class [MainCss.Submit]
@@ -129,7 +143,7 @@ post loginForm errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl
-        , body = Http.string (encode (query loginForm.email))
+        , body = Http.string (encode (query loginForm.email loginForm.groupId))
         , headers = [ ( "Content-Type", "application/json" ) ]
         }
         |> Http.fromJson loginResultDecoder
@@ -155,10 +169,10 @@ uuidDecoder =
         ("uuid" := JsonD.string)
 
 
-query : String -> JsonE.Value
-query userId =
+query : String -> String -> JsonE.Value
+query email groupId =
     JsonE.object
-        [ ("query", JsonE.string ("mutation{loginPerson(email:\"" ++ userId ++ "\",groupId:1){uuid}}"))
+        [ ("query", JsonE.string ("mutation{loginPerson(email:\"" ++ email ++ "\",groupId:" ++ groupId ++ "){uuid}}"))
         ]
 
 
