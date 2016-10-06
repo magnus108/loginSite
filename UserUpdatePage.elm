@@ -1,3 +1,13 @@
+-- this file is reallyy bad
+-- this file is reallyy bad
+-- this file is reallyy bad
+-- this file is reallyy bad
+-- this file is reallyy bad
+-- this file is reallyy bad
+-- this file is reallyy bad
+-- this file is reallyy bad
+
+
 module UserUpdatePage exposing (..)
 
 import Pages
@@ -11,32 +21,32 @@ import Task
 
 import MainCss
 
-type alias UpdatePeople =
-    { updatePeople : People
-    }
-
-
-type alias People =
-    { people : List Person
-    }
-
-
-type Data
-    = Query People
-    | Mutation UpdatePeople
-
 
 type alias Model =
-    { userId : String
-    , data : Data
+    { person : Maybe Person
     , message : String
+    , state: State
     }
 
+type State
+    = Query
+    | Mutation
 
-type alias Result =
-    { data : Data
+type alias UserPageResult =
+    { data : UserPageData
     }
 
+type alias UserUpdatePageResult =
+    { data : UserUpdatePageData
+    }
+
+type alias UserPageData =
+    { person : Person
+    }
+
+type alias UserUpdatePageData =
+    { person : Person
+    }
 
 type alias Person =
     { firstname : String
@@ -58,16 +68,11 @@ type alias Uuid =
     }
 
 
-emptyData : Data
-emptyData =
-    Query { people = [] }
-
-
 emptyModel : Model
 emptyModel =
-    { userId = ""
-    , data = emptyData
+    { person = Nothing
     , message = "Initiating"
+    , state = Query
     }
 
 
@@ -79,10 +84,10 @@ init =
 type Msg
     = NoOp
     | Error String
-    | Get Result
+    | Get UserPageResult
+    | Post UserUpdatePageResult
     | Submit Person
-    | Input String String
-    | SetUser String
+    | Input String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -93,53 +98,41 @@ update msg model =
                 ! []
 
         Get result ->
-            case result.data of
-                Query data ->
-                    { model
-                        | message = "This is your account"
-                        , data = Query data
-                    } ! []
-                Mutation data ->
-                    { model
-                        | message = "Your update"
-                        , data = Mutation data
-                    } ! []
+            { model
+                | message = "This is your account"
+                , person = Just result.data.person
+                , state = Query
+            } ! []
+
+        Post result ->
+            --these are the same now that seems bad 
+            --these are the same now that seems bad 
+            --these are the same now that seems bad 
+            --these are the same now that seems bad 
+            { model
+                | message = "This is your account"
+                , person = Just result.data.person
+                , state = Mutation
+            } ! []
 
         Error err ->
             { model | message = "Oops! An error occurred: " ++ err }
                 ! []
 
-        Input firstname str ->
-            case model.data of
-                Query data ->
-                    let
-                        (people, cmds) =
-                            List.unzip
-                                ( List.map (updateHelp firstname str) data.people )
-
-                    in
-                        { model | data = Query { data | people = people}} ! cmds
-
-                Mutation data ->
-                        model ! []
-
-        SetUser userId ->
-            { model | userId = userId } ! []
+        Input str ->
+            let
+                person = model.person
+            in
+                case person of
+                    Nothing -> model ! []
+                    Just person ->
+                        { model | person = Just { person | firstname = str }} ! []
 
         Submit person ->
             { model | message = "Initiating update" }
-                ! [post model.userId person Error Get]
+                ! [post person Error Post]
 
 
-
-updateHelp : String -> String -> Person -> (Person, Cmd Msg)
-updateHelp firstname str person =
-    if person.firstname /= firstname then
-        person
-            ! []
-    else
-        { person | firstname = str }
-            ! []
 
 view : Model -> Html Msg
 view model =
@@ -147,55 +140,54 @@ view model =
         { class } =
             MainCss.navbarNamespace
 
-        head =
-            h3 [class [MainCss.Headline]] [ text model.message ]
-
-        body =
-            case model.data of
-                Query data ->
-                    div []
-                        [ ul [class [MainCss.List]] (List.map personFormView data.people)
-                        ]
-                Mutation data ->
-                    div []
-                        [ ul [class [MainCss.List]] (List.map personUpdateView data.updatePeople.people)
-                        ]
-
-        personFormView person =
-            li []
-                [ form [ onSubmit (Submit person), class [MainCss.Form] ]
-                    [ input [ type' "text"
-                        , placeholder "firstname"
-                        , onInput (Input person.firstname)
-                        , value person.firstname
-                        , class [MainCss.Input]
-                        ] []
-                    , input [ type' "submit"
-                        , value "Update"
-                        , class [MainCss.Submit]
-                        ] []
-                    ]
-                ]
 
         personUpdateView person =
-            li []
-                [ p [] [ text person.firstname ]
-                ]
+            case person of
+                Nothing -> div [] []
+                Just person ->
+                    p [] [ text person.firstname ]
 
+        personFormView person =
+            case person of
+                Nothing -> div [] []
+                Just person ->
+                    div []
+                        [ form [ onSubmit (Submit person), class [MainCss.Form] ]
+                            [ input [ type' "text"
+                                , placeholder "firstname"
+                                , onInput Input
+                                , value person.firstname
+                                , class [MainCss.Input]
+                                ] []
+                            , input [ type' "submit"
+                                , value "Update"
+                                , class [MainCss.Submit]
+                                ] []
+                            ]
+                        ]
     in
-        div [] [ head, body ]
+        --- this is a shitty solution
+        --- this is a shitty solution
+        --- this is a shitty solution
+        --- this is a shitty solution
+        --- this is a shitty solution is should go to userpage/success or something i think
+        case model.state of
+            Query ->
+                div []
+                    [ h3 [class [MainCss.Headline]] [ text model.message ]
+                    , personFormView model.person
+                    ]
+            Mutation ->
+                div []
+                    [ h3 [class [MainCss.Headline]] [ text model.message ]
+                    , personUpdateView model.person
+                    ]
 
 
 
 mountCmd : LoginResult -> Cmd Msg
 mountCmd loginResult =
-    let
-        email = loginResult.data.loginPerson.email
-    in
-        Cmd.batch
-            [ Task.perform identity identity (Task.succeed (SetUser email))
-            , get email Error Get
-            ]
+    get loginResult.data.loginPerson.email Error Get
 
 
 
@@ -204,7 +196,7 @@ baseUrl =
     "http://localhost:3000/graphql?raw"
 
 
-get : String -> (String -> a) -> (Result -> a) -> Cmd a
+get : String -> (String -> a) -> (UserPageResult -> a) -> Cmd a
 get userId errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
@@ -213,48 +205,46 @@ get userId errorMsg msg =
         , headers =
             [ ( "Content-Type", "application/json" ) ]
         }
-        |> Http.fromJson resultDecoder
+        |> Http.fromJson userPageResultDecoder
         |> Task.mapError toString
         |> Task.perform errorMsg msg
 
 
-post : String -> Person -> (String -> a) -> (Result -> a) -> Cmd a
-post userId person errorMsg msg =
+post : Person -> (String -> a) -> (UserUpdatePageResult -> a) -> Cmd a
+post person errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
         , url = baseUrl
-        , body = Http.string (encode (mutation userId person.firstname))
+        , body = Http.string (encode (mutation person.firstname))
         , headers = [ ( "Content-Type", "application/json" ) ]
         }
-        |> Http.fromJson resultDecoder
+        |> Http.fromJson userUpdatePageResultDecoder
         |> Task.mapError toString
         |> Task.perform errorMsg msg
 
 
-resultDecoder : JsonD.Decoder Result
-resultDecoder =
-    JsonD.object1 Result
-        ("data" := dataDecoder)
+userUpdatePageResultDecoder : JsonD.Decoder UserUpdatePageResult
+userUpdatePageResultDecoder =
+    JsonD.object1 UserUpdatePageResult
+        ("data" := userUpdatePageDataDecoder)
 
 
-dataDecoder : JsonD.Decoder Data
-dataDecoder =
-    JsonD.oneOf
-    [ JsonD.object1 Query peopleDecoder
-    , JsonD.object1 Mutation updatePeopleDecoder
-    ]
+userPageResultDecoder : JsonD.Decoder UserPageResult
+userPageResultDecoder =
+    JsonD.object1 UserPageResult
+        ("data" := userPageDataDecoder)
 
 
-updatePeopleDecoder : JsonD.Decoder UpdatePeople
-updatePeopleDecoder =
-    JsonD.object1 UpdatePeople
-        ("updatePeople" := peopleDecoder)
+userUpdatePageDataDecoder : JsonD.Decoder UserUpdatePageData
+userUpdatePageDataDecoder =
+    JsonD.object1 UserUpdatePageData
+        ("updatePerson" := personDecoder)
 
 
-peopleDecoder : JsonD.Decoder People
-peopleDecoder =
-    JsonD.object1 People
-        ("people" := JsonD.list personDecoder)
+userPageDataDecoder : JsonD.Decoder UserPageData
+userPageDataDecoder =
+    JsonD.object1 UserPageData
+        ("person" := personDecoder)
 
 
 personDecoder : JsonD.Decoder Person
@@ -263,19 +253,26 @@ personDecoder =
         ("firstname" := JsonD.string)
 
 
-mutation : String -> String -> JsonE.Value
-mutation userId firstname =
+mutation : String -> JsonE.Value
+mutation firstname =
+    let
+        userId = "Dulce_Jenkins@hotmail.com"
+    in
     JsonE.object
-        [ ("query", JsonE.string ("mutation { updatePeople(values: {firstname: \"" ++ firstname ++ "\"},
-            options: {where: {email: \"" ++ userId ++ "\"}, returning: true}) { people { firstname}}}"))
+        [ ("query",
+            JsonE.string ("mutation($uuid:String!,$personId:String!,$values:JSON!){updatePerson(values:$values,personId:$personId,uuid:$uuid){firstname}}"))
+          , ("variables",
+            JsonE.string ("{\"uuid\":\"" ++ userId ++ "\",\"personId\":\"" ++ userId ++ "\",\"values\":{\"firstname\":\"" ++ firstname ++ "\"}}"))
         ]
 
 
 query : String -> JsonE.Value
 query userId =
     JsonE.object
-        [ ("query", JsonE.string ("{people(where:{email:\"" ++ userId ++ "\"})
-            {firstname}}"))
+        [ ("query",
+            JsonE.string ("query($uuid:String!){person(uuid:$uuid){firstname}}"))
+          , ("variables",
+            JsonE.string ("{\"uuid\": \"" ++ userId ++ "\"}"))
         ]
 
 

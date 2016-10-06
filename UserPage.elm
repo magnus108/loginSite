@@ -10,21 +10,19 @@ import Task
 import MainCss
 
 type alias Model =
-    { userId : Maybe String
-    , data : Data
+    { person : Maybe Person
     , message : String
     }
 
 
-type alias Result =
-    { data : Data
+type alias UserPageResult =
+    { data : UserPageData
     }
 
 
-type alias Data =
-    { people : List Person
+type alias UserPageData =
+    { person : Person
     }
-
 
 type alias Person =
     { firstname : String
@@ -43,15 +41,10 @@ type alias Uuid =
     { email : String
     }
 
-emptyData : Data
-emptyData =
-    { people = [] }
-
 
 emptyModel : Model
 emptyModel =
-    { userId = Nothing
-    , data = emptyData
+    { person = Nothing
     , message = "Initiating"
     }
 
@@ -64,7 +57,7 @@ init =
 type Msg
     = NoOp
     | Error String
-    | Get Result
+    | Get UserPageResult
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -77,7 +70,7 @@ update msg model =
         Get result ->
             { model
                 | message = "This is your account"
-                , data = result.data
+                , person = Just result.data.person
             } ! []
 
         Error err ->
@@ -88,19 +81,21 @@ update msg model =
 view : Model -> Html Msg
 view model =
     let
-
         { class } =
             MainCss.navbarNamespace
 
         personView person =
-            li []
-                [ p [] [ text person.firstname]
-                , p  [] [ Pages.linkTo (Pages.UserUpdatePage) [class [MainCss.Link]] [ text "update" ] ]
-                ]
+            case person of
+                Nothing -> div [] []
+                Just person ->
+                    div []
+                        [ p [] [ text person.firstname]
+                        , p [] [ Pages.linkTo (Pages.UserUpdatePage) [class [MainCss.Link]] [ text "update" ] ]
+                        ]
     in
         div []
             [ h3 [class [MainCss.Headline]] [ text model.message ]
-            , ul [class [MainCss.List]] (List.map personView model.data.people)
+            , personView model.person
             ]
 
 
@@ -108,12 +103,13 @@ mountCmd : LoginResult -> Cmd Msg
 mountCmd loginResult =
     get loginResult.data.loginPerson.email Error Get
 
+
 baseUrl : String
 baseUrl =
     "http://localhost:3000/graphql?raw"
 
 
-get : String -> (String -> a) -> (Result -> a) -> Cmd a
+get : String -> (String -> a) -> (UserPageResult -> a) -> Cmd a
 get userId errorMsg msg =
     Http.send Http.defaultSettings
         { verb = "POST"
@@ -122,26 +118,21 @@ get userId errorMsg msg =
         , headers =
             [ ( "Content-Type", "application/json" ) ]
         }
-        |> Http.fromJson resultDecoder
+        |> Http.fromJson userPageResultDecoder
         |> Task.mapError toString
         |> Task.perform errorMsg msg
 
 
-resultDecoder : JsonD.Decoder Result
-resultDecoder =
-    JsonD.object1 Result
-        ("data" := dataDecoder)
+userPageResultDecoder : JsonD.Decoder UserPageResult
+userPageResultDecoder =
+    JsonD.object1 UserPageResult
+        ("data" := userPageDataDecoder)
 
 
-dataDecoder : JsonD.Decoder Data
-dataDecoder =
-    JsonD.object1 Data
-        ("people" := peopleDecoder)
-
-
-peopleDecoder : JsonD.Decoder (List Person)
-peopleDecoder =
-    JsonD.list personDecoder
+userPageDataDecoder : JsonD.Decoder UserPageData
+userPageDataDecoder =
+    JsonD.object1 UserPageData
+        ("person" := personDecoder)
 
 
 personDecoder : JsonD.Decoder Person
@@ -153,7 +144,10 @@ personDecoder =
 query : String -> JsonE.Value
 query userId =
     JsonE.object
-        [ ("query", JsonE.string ("{people(where:{email:\"" ++ userId ++ "\"}){firstname}}"))
+        [ ("query",
+            JsonE.string ("query($uuid:String!){person(uuid:$uuid){firstname}}"))
+          , ("variables",
+            JsonE.string ("{\"uuid\": \"" ++ userId ++ "\"}"))
         ]
 
 
